@@ -93,7 +93,7 @@ if __name__ == "__main__":
     kafka.get_stream_source(
         "seq_fact_populasi",
         topic = "populasi",
-        host = "localhost:29200",
+        host = "kafka:9092",
         process = main,
         logger = logger
     )
