@@ -1,99 +1,81 @@
-import os
-import json
-import pendulum
-from datetime import datetime
-from typing import List
-from etl.shared import (
-    database,
-    kafka,
+from etl.helper import (
+    db,
+    id_getter,
     log,
-    schemas
+    kafka,
+    validator,
 )
-logger = log.create_logger()
-QUERY_DIR = os.path.join(os.path.dirname(__file__), "query")
-SHARED_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "shared", "sql")
-TZINFO = pendulum.timezone("Asia/Jakarta")
+
+from etl.seq_fact_populasi.modules.entity import FactPopulasiID, InputPopulasi
+from etl.seq_fact_populasi.modules.repository import FactPopulasiRepository
+from etl.seq_fact_populasi.modules.usecase import FactPopulasiUsecase
+
 
 # Main Sequence
-def main(data: dict):
+def main(
+    data: dict,
+    validator_h: validator.ValidatorHelper,
+    id_getter_h: id_getter.IDGetterHelper,
+    log_stream_h: log.LogStreamHelper,
+    usecase: FactPopulasiUsecase
+):
+    """
+    Fact Populasi - Streaming ETL
+
+    Schema:
+    {
+        "source_table": [str],
+        "action": [str],
+        "data": {
+            "tgl_pencatatan": [date],
+            "id_peternak": [int],
+            "jml_pedaging_jantan": [int],
+            "jml_pedaging_betina": [int],
+            "jml_pedaging_anakan_jantan": [int],
+            "jml_pedaging_anakan_betina": [int],
+            "jml_perah_jantan": [int],
+            "jml_perah_betina": [int],
+            "jml_perah_anakan_jantan": [int],
+            "jml_perah_anakan_betina": [int],
+        }
+    }
+    """
+    
     try:
-        start_tm = datetime.now(TZINFO)
-        # Validation
-        valid_event: schemas.EventFactPopulasi = schemas.validating_event(data, schemas.EventFactPopulasi, logger)
+        event_data: InputPopulasi = validator_h.validate(data)
         
-        # Processing
-        data_tr = database.get_dwh_ids(valid_event.identifier.model_dump(), {
-            "tgl_pencatatan": "id_waktu"
-        })
-        prep_data = __prepare_data(data_tr, valid_event.action, valid_event.amount.model_dump())
-
-        # Update DWH
-        for data in prep_data:
-            database.run_query(
-                query_name = "upsert_fact_populasi_stream",
-                query_dir = QUERY_DIR,
-                params = data.model_dump()
-            )
-        
-        logger.info("Processed - Status: OK")
-        end_tm = datetime.now(TZINFO)
-        duration = round((end_tm - start_tm).total_seconds(), 2)
-        database.run_query(
-            query_name = "logging",
-            query_dir = SHARED_DIR,
-            params = {
-                "table_name": valid_event.source_table,
-                "mode": valid_event.action,
-                "payload": json.dumps(prep_data[0].model_dump()),
-                "start_tm": start_tm,
-                "end_tm": end_tm,
-                "duration": duration
-            }
+        log_stream_h.start_log("fact_populasi", event_data.source_table, event_data.action, event_data.data)
+        fact_populasi_id = FactPopulasiID(
+            id_waktu = id_getter_h.get_id_waktu(event_data.data.tgl_pencatatan),
+            id_lokasi = id_getter_h.get_id_lokasi_from_peternakan(event_data.data.id_peternak),
+            id_peternakan = event_data.data.id_peternak,
         )
-
+        usecase.load(event_data, fact_populasi_id)
+        
+        log_stream_h.end_log()
+        logger.info("Processed - Status: OK")
     except Exception as err:
         logger.error(str(err))
         logger.info("Processed - Status: FAILED")
 
 
-# Process
-def __prepare_data(data: dict, action: str, amount: dict) -> List[schemas.TableFactPopulasi]:
-    fmt_amount = __reformat_amount(amount)
-
-    all_data = []
-    for row_amount in fmt_amount:
-        flag_delete = action == "DELETE"
-        
-        prep_data = {
-            **data,
-            **row_amount,
-            "flag_delete": flag_delete
-        }
-        all_data.append(prep_data)
-    return [schemas.TableFactPopulasi(**data) for data in all_data]
-
-
-def __reformat_amount(data: dict) -> list:
-    header = ("jenis_kelamin", "tipe_ternak", "tipe_usia", "jumlah")
-    row_data = [
-        ("jantan", "pedaging", "dewasa", data["jml_pedaging_jantan"]),
-        ("jantan", "pedaging", "anakan", data["jml_pedaging_anakan_jantan"]),
-        ("jantan", "perah", "dewasa", data["jml_perah_jantan"]),
-        ("jantan", "perah", "anakan", data["jml_perah_anakan_jantan"]),
-        ("betina", "pedaging", "dewasa", data["jml_pedaging_betina"]),
-        ("betina", "pedaging", "anakan", data["jml_pedaging_anakan_betina"]),
-        ("betina", "perah", "dewasa", data["jml_perah_betina"]),
-        ("betina", "perah", "anakan", data["jml_perah_anakan_betina"])
-    ]
-    fmt_amount = [dict(zip(header, row)) for row in row_data]
-    return fmt_amount
-
 # Runtime
 if __name__ == "__main__":
-    kafka.get_stream_source(
-        "seq_fact_populasi",
-        topic = "populasi",
-        host = "kafka:9092",
-        process = main,
-        logger = logger
+    logger = log.create_logger()
+    validator_h = validator.ValidatorHelper(logger, InputPopulasi)
+
+    dwh = db.DWHHelper()
+    id_getter_h = id_getter.IDGetterHelper(dwh)
+    log_stream_h = log.LogStreamHelper(dwh)
+    
+    repo = FactPopulasiRepository(dwh, logger)
+    usecase = FactPopulasiUsecase(repo, logger)
+
+    kafka_h = kafka.KafkaHelper("seq_fact_populasi", logger)
+    kafka_h.run(
+        main,
+        validator_h = validator_h,
+        id_getter_h = id_getter_h,
+        log_stream_h = log_stream_h,
+        usecase = usecase,
     )

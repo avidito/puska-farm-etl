@@ -1,6 +1,15 @@
+﻿annotated-types==0.6.0
+greenlet==3.0.3
 kafka-python==2.0.2
+pendulum==3.0.0
 psycopg2-binary==2.9.9
 pydantic==2.4.2
 pydantic-settings==2.1.0
-SQLAlchemy==1.4.49
-pendulum
+pydantic_core==2.10.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.0.1
+six==1.16.0
+SQLAlchemy==2.0.20
+time-machine==2.14.1
+typing_extensions==4.10.0
+tzdata==2024.1
