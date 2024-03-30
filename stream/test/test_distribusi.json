@@ -1,0 +1,1 @@
+{"source_table": "distribusi", "action": "CREATE", "data": {"tgl_distribusi": "2024-03-29", "id_unit_ternak": 1, "id_jenis_produk": 1, "id_mitra_bisnis": 1, "jumlah": 2, "harga_berlaku": 10000}}
