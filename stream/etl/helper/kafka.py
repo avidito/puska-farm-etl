@@ -23,7 +23,7 @@ class KafkaHelper:
     # Methods
     def run(self, process: Callable, **kwargs):
         try:
-            self.__logger.info(f"Starting - {self.__label}")
+            self.__logger.info(f"Starting - {self.__label}. Host: '{self.__host}' Topic: '{self.__topic}'")
             consumer = KafkaConsumer(
                 self.__topic,
                 bootstrap_servers = self.__host,
