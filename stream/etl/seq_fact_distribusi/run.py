@@ -63,8 +63,8 @@ if __name__ == "__main__":
     validator_h = validator.ValidatorHelper(logger, InputDistribusi)
 
     dwh = db.DWHHelper()
-    id_getter_h = id_getter.IDGetterHelper(dwh)
     log_stream_h = log.LogStreamHelper(dwh)
+    id_getter_h = id_getter.IDGetterHelper(dwh, logger)
     
     repo = FactDistribusiRepository(dwh, logger)
     usecase = FactDistribusiUsecase(repo, logger)

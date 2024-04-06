@@ -65,8 +65,8 @@ if __name__ == "__main__":
     validator_h = validator.ValidatorHelper(logger, InputPopulasi)
 
     dwh = db.DWHHelper()
-    id_getter_h = id_getter.IDGetterHelper(dwh)
     log_stream_h = log.LogStreamHelper(dwh)
+    id_getter_h = id_getter.IDGetterHelper(dwh, logger)
     
     repo = FactPopulasiRepository(dwh, logger)
     usecase = FactPopulasiUsecase(repo, logger)
