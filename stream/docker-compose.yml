@@ -1,0 +1,38 @@
+version: '3.4'
+x-puska-etl-common:
+  &puska-etl-common
+  environment:
+    &puska-etl-common-env
+    DWH_USERNAME: ${DWH_USER:-puska}
+    DWH_PASSWORD: ${DWH_PASSWORD:-puska}
+    DWH_HOSTNAME: ${DWH_HOSTNAME:-db-dwh}
+    DWH_PORT: ${DWH_PORT:-5432}
+    DWH_NAME: ${DWH_NAME:-puska}
+    KAFKA_HOST: ${KAFKA_HOST:-kafka:9092}
+services:
+  distribusi:
+    build:
+      context: .
+    network_mode: "host"
+    environment:
+      <<: *puska-etl-common-env
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-distribusi}
+    entrypoint: ["python", "-m", "etl.seq_fact_distribusi.run"]
+
+  populasi:
+    build:
+      context: .
+    network_mode: "host"
+    environment:
+      <<: *puska-etl-common-env
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-populasi}
+    entrypoint: ["python", "-m", "etl.seq_fact_populasi.run"]
+
+  produksi:
+    build:
+      context: .
+    network_mode: "host"
+    environment:
+      <<: *puska-etl-common-env
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-produksi}
+    entrypoint: ["python", "-m", "etl.seq_fact_produksi.run"]
