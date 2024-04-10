@@ -1,0 +1,36 @@
+from typing import Optional
+from pydantic import BaseModel
+from datetime import date
+
+
+# DWH
+class FactDistribusi(BaseModel):
+    id_waktu: int
+    id_lokasi: int
+    id_unit_peternak: int
+    id_mitra_bisnis: int
+    id_jenis_produk: int
+    jumlah_distribusi: int
+    harga_minimum: int
+    harga_maximum: int
+    harga_rata_rata: float
+    jumlah_penjualan: int
+
+
+# OPS
+class FactDistribusiCalc(BaseModel):
+    tgl_distribusi: date
+    id_unit_peternak: int
+    id_jenis_produk: int
+    id_mitra_bisnis: int
+    jumlah_distribusi: int = 0
+    harga_minimum: int = 0
+    harga_maximum: int = 0
+    harga_rata_rata: float = 0
+    jumlah_penjualan: int = 0
+
+
+# Params
+class ParamsFactDistribusi(BaseModel):
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None

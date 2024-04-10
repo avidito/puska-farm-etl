@@ -1,0 +1,48 @@
+version: '3.4'
+x-puska-etl-common:
+  &puska-etl-common
+  environment:
+    &puska-etl-common-env
+    OPS_USERNAME: ${OPS_USERNAME:-puska}
+    OPS_PASSWORD: ${OPS_PASSWORD:-puska}
+    OPS_HOSTNAME: ${OPS_HOSTNAME:-localhost}
+    OPS_PORT: ${OPS_PORT:-5600}
+    OPS_NAME: ${OPS_NAME:-puska}
+    DWH_USERNAME: ${DWH_USER:-puska}
+    DWH_PASSWORD: ${DWH_PASSWORD:-puska}
+    DWH_HOSTNAME: ${DWH_HOSTNAME:-localhost}
+    DWH_PORT: ${DWH_PORT:-5601}
+    DWH_NAME: ${DWH_NAME:-puska}
+services:
+  distribusi:
+    build:
+      context: .
+    network_mode: "host"
+    restart: always
+    environment:
+      <<: *puska-etl-common-env
+    entrypoint: ["sleep", "infinity"]
+    volumes:
+     - ./etl:/scripts/etl
+
+  populasi:
+    build:
+      context: .
+    network_mode: "host"
+    restart: always
+    environment:
+      <<: *puska-etl-common-env
+    entrypoint: ["sleep", "infinity"]
+    volumes:
+     - ./etl:/scripts/etl
+
+  produksi:
+    build:
+      context: .
+    network_mode: "host"
+    restart: always
+    environment:
+      <<: *puska-etl-common-env
+    entrypoint: ["sleep", "infinity"]
+    volumes:
+     - ./etl:/scripts/etl
