@@ -3,13 +3,15 @@ from logging import Logger
 from etl.seq_fact_populasi.modules.entity import (
     FactPopulasi,
     FactPopulasiID,
-    InputPopulasi,
+    KafkaPopulasi,
 )
-from etl.seq_fact_populasi.modules.repository import FactPopulasiRepository
+from etl.seq_fact_populasi.modules.repository import (
+    FactPopulasiDWHRepository,
+)
 
 
 class FactPopulasiUsecase:
-    __repo: FactPopulasiRepository
+    __dwh_repo: FactPopulasiDWHRepository
     __logger: Logger
 
     JENIS_KELAMIN = [
@@ -27,14 +29,14 @@ class FactPopulasiUsecase:
         "Dewasa"
     ]
 
-    def __init__(self, repo: FactPopulasiRepository, logger: Logger):
-        self.__repo = repo
+    def __init__(self, dwh_repo: FactPopulasiDWHRepository, logger: Logger):
+        self.__dwh_repo = dwh_repo
         self.__logger = logger
     
 
     # Methods
-    def load(self, input_populasi: InputPopulasi, id_list: FactPopulasiID):
-        data = input_populasi.data
+    def load(self, kafka_populasi: KafkaPopulasi, id_list: FactPopulasiID):
+        data = kafka_populasi.data
 
         for jk in self.JENIS_KELAMIN:
             for tt in self.TIPE_TERNAK:
@@ -51,7 +53,7 @@ class FactPopulasiUsecase:
                         "tipe_ternak": tt,
                         "tipe_usia": tu
                     })
-                    exists_data = self.__repo.get(id_list_ext)
+                    exists_data = self.__dwh_repo.get(id_list_ext)
                     
                     populasi = FactPopulasi(
                         id_waktu = id_list_ext.id_waktu,
@@ -66,6 +68,6 @@ class FactPopulasiUsecase:
                         jumlah_keluar = exists_data.jumlah_keluar if (exists_data) else 0, 
                         jumlah = getattr(data, value_column, None)
                     )
-                    # self.__logger.info(populasi)
-
-                    self.__repo.load(populasi)
+                    
+                    self.__logger.info(f"Loading data to 'Fact Populasi'")
+                    self.__dwh_repo.load(populasi)

@@ -1,7 +1,7 @@
 import os
 from logging import Logger
-
 from typing import List, Optional
+
 from etl.helper.db import DWHHelper
 from etl.seq_fact_produksi.modules.entity import (
     FactProduksi,
@@ -9,7 +9,7 @@ from etl.seq_fact_produksi.modules.entity import (
 )
 
 
-class FactProduksiRepository:
+class FactProduksiDWHRepository:
     __dwh: DWHHelper
     __logger: Logger
 
@@ -28,18 +28,20 @@ class FactProduksiRepository:
 
 
     # Methods
+    def get(self, id_list: FactProduksiID) -> Optional[FactProduksi]:
+        self.__logger.debug("Get data from 'Fact Produksi'")
+        params = id_list.model_dump()
+        results = self.__dwh.run(self.__query_dir, "get_fact_produksi.sql", params)
+        
+        fact_produksi = FactProduksi(**results[0]) if (results) else None
+        return fact_produksi
+    
+
     def load(self, produksi: FactProduksi):
-        # self.__logger.info(produksi)
+        self.__logger.debug("Load data to 'Fact Produksi'")
         self.__dwh.load(
             "fact_produksi_stream",
             data=[produksi],
             pk = self.PK,
             update_insert = True
         )
-    
-    def get(self, id_list: FactProduksiID) -> Optional[FactProduksi]:
-        params = id_list.model_dump()
-        results = self.__dwh.run(self.__query_dir, "get_fact_produksi.sql", params)
-        
-        fact_produksi = FactProduksi(**results[0]) if (results) else None
-        return fact_produksi

@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Type, TypeVar
+from typing import Type
 from pydantic import BaseModel, ValidationError
 
 

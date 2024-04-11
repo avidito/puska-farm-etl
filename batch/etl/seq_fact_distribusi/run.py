@@ -62,9 +62,9 @@ def main(
 # Runtime
 if __name__ == "__main__":
     logger = log.create_logger()
-
     dwh = db.DWHHelper()
     ops = db.OpsHelper()
+
     log_batch_h = log.LogBatchHelper(dwh)
     id_getter_h = id_getter.IDGetterHelper(dwh, logger)
     

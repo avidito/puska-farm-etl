@@ -1,6 +1,6 @@
 import os
 from logging import Logger
-from typing import Optional, List
+from typing import Optional
 from datetime import date
 
 from etl.helper.db import DWHHelper

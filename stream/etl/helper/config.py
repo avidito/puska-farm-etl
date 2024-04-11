@@ -1,6 +1,7 @@
 from pydantic import SecretStr, Field
 from pydantic_settings import BaseSettings
 
+
 # Definition
 class EnvConfig(BaseSettings):
     DWH_DIALECT: str = Field(alias="DWH_DIALECT", default="postgresql")
@@ -11,6 +12,7 @@ class EnvConfig(BaseSettings):
     DWH_NAME: str = Field(alias="DWH_NAME")
     KAFKA_HOST: str = Field(alias="KAFKA_HOST")
     KAFKA_TOPIC: str = Field(alias="KAFKA_TOPIC")
+
 
 # Implementation
 CONFIG = EnvConfig()

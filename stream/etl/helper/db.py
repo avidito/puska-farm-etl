@@ -38,6 +38,7 @@ class DWHHelper:
         with self.__db.connect() as conn:
             results_it = conn.execute(query_clause, params)
             results = [dict(row) for row in results_it.mappings().all()]
+            conn.commit()
         return results
 
 
@@ -48,15 +49,16 @@ class DWHHelper:
         return results
 
 
-    def load(self, table: str, data: List[BaseModel], pk: List[str], update_insert: bool = False) -> None:
+    def load(self, table: str, data: List[BaseModel], pk: List[str], update_insert: bool = False) -> int:
         if (len(data) > 0):
             data_dict = [row.model_dump() for row in data]
             columns = data_dict[0].keys()
 
             load_query = self.__generate_load_query(table, columns, pk, data_dict, update_insert)
-            with self.__db.connect() as conn:
-                _ = conn.exec_driver_sql(load_query)
-                conn.commit()
+            processed_rows = self.exec(load_query, {})[0]["processed_rows"]
+            return processed_rows
+        else:
+            return 0
     
 
     # Private
@@ -70,15 +72,15 @@ class DWHHelper:
     ) -> str:
         # Define Insert Statement
         insert_statement = "\n".join([
-            f"INSERT INTO {table} (",
+            f"  INSERT INTO {table} (",
             *[
-                f"  {c},"
+                f"    {c},"
                 for c in columns
             ],
-            "  created_dt,",
-            "  modified_dt",
-            ")",
-            "VALUES ",
+            "    created_dt,",
+            "    modified_dt",
+            "  )",
+            "  VALUES ",
         ])
 
         # Define Insert Values Statement
@@ -114,12 +116,12 @@ class DWHHelper:
 
         # Define Update/Insert Statement
         upsert_statement = "\n".join([
-            f"ON CONFLICT ON CONSTRAINT {table}_pkey DO UPDATE SET",
+            f"  ON CONFLICT ON CONSTRAINT {table}_pkey DO UPDATE SET",
             *[
-                f"  {col} = EXCLUDED.{col},"
+                f"    {col} = EXCLUDED.{col},"
                 for col in filter(lambda c: c not in pk, columns)
             ],
-            "  modified_dt = TIMEZONE('Asia/Jakarta', NOW())",
+            "    modified_dt = TIMEZONE('Asia/Jakarta', NOW())",
         ])
 
         query = insert_statement + insert_value_statement
@@ -128,5 +130,13 @@ class DWHHelper:
                 query,
                 upsert_statement,
             ])
-        query += ";"
+        
+        # Get Row Count
+        query = "\n".join([
+            "WITH data_load AS (",
+            query,
+            "  RETURNING 1",
+            ")",
+            "SELECT COUNT(0) AS processed_rows FROM data_load;",
+        ])
         return query
