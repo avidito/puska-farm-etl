@@ -2,14 +2,21 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import date
 
-# DWH
-class FactPopulasi(BaseModel):
+
+# IDs
+class FactPopulasiID(BaseModel):
     id_waktu: int
     id_lokasi: int
     id_peternakan: int
-    jenis_kelamin: str
-    tipe_ternak: str
-    tipe_usia: str
+    jenis_kelamin: Optional[str] = None
+    tipe_ternak: Optional[str] = None
+    tipe_usia: Optional[str] = None
+
+    model_config = ConfigDict(validate_assignment=True)
+
+
+# DWH
+class FactPopulasi(FactPopulasiID):
     jumlah_lahir: int
     jumlah_mati: int
     jumlah_masuk: int
@@ -30,19 +37,9 @@ class HistoryPopulasi(BaseModel):
     jml_perah_anakan_jantan: int
     jml_perah_anakan_betina: int
 
-# Input
-class InputPopulasi(BaseModel):
+
+# Kafka
+class KafkaPopulasi(BaseModel):
     source_table: str
     action: str
     data: HistoryPopulasi
-
-# IDs
-class FactPopulasiID(BaseModel):
-    id_waktu: int
-    id_lokasi: int
-    id_peternakan: int
-    jenis_kelamin: Optional[str] = None
-    tipe_ternak: Optional[str] = None
-    tipe_usia: Optional[str] = None
-
-    model_config = ConfigDict(validate_assignment=True)

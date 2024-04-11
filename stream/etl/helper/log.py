@@ -1,12 +1,10 @@
+import pytz
 import logging
-import pendulum
 from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
 
 from etl.helper.db import DWHHelper
-
-TIMEZONE = pendulum.timezone("Asia/Jakarta")
 
 
 def create_logger():
@@ -26,6 +24,7 @@ def create_logger():
     logger.addHandler(stream_handler)
 
     return logger
+
 
 # Entity
 class LogStream(BaseModel):
@@ -64,14 +63,14 @@ class LogStreamHelper:
             source_table = source_table,
             action = action,
             payload = payload,
-            start_tm = datetime.now(tz=TIMEZONE),
+            start_tm = datetime.now(tz=pytz.timezone("Asia/Jakarta")),
         )
 
         self.__entity = log_stream_en
 
 
     def end_log(self):
-        end_tm = datetime.now(tz=TIMEZONE)
+        end_tm = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
         duration = ((end_tm - self.__entity.start_tm).total_seconds()) * 1000 # Convert into milliseconds
 
         self.__entity.end_tm = end_tm

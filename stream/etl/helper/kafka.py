@@ -1,7 +1,7 @@
-from typing import Callable
-from logging import Logger
-
 import json
+from logging import Logger
+from typing import Callable
+
 from kafka import KafkaConsumer
 
 from etl.helper.config import CONFIG
