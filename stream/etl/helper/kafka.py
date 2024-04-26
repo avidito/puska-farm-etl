@@ -11,6 +11,7 @@ class KafkaHelper:
     __label: str
     __topic: str
     __host: str
+    __port: str
     __logger: Logger
 
     def __init__(self, label: str, logger: Logger):
@@ -18,6 +19,7 @@ class KafkaHelper:
         self.__logger = logger
         self.__topic = CONFIG.KAFKA_TOPIC
         self.__host = CONFIG.KAFKA_HOST
+        self.__port = CONFIG.KAFKA_PORT
     
 
     # Methods
@@ -26,7 +28,7 @@ class KafkaHelper:
             self.__logger.info(f"Starting - {self.__label}. Host: '{self.__host}' Topic: '{self.__topic}'")
             consumer = KafkaConsumer(
                 self.__topic,
-                bootstrap_servers = self.__host,
+                bootstrap_servers = f"{self.__host}:{self.__port}",
                 value_deserializer = self.__value_deserializer,
             )
 

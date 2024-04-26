@@ -11,6 +11,7 @@ class EnvConfig(BaseSettings):
     DWH_PORT: str = Field(alias="DWH_PORT")
     DWH_NAME: str = Field(alias="DWH_NAME")
     KAFKA_HOST: str = Field(alias="KAFKA_HOST")
+    KAFKA_PORT: str = Field(alias="KAFKA_PORT")
     KAFKA_TOPIC: str = Field(alias="KAFKA_TOPIC")
 
 
