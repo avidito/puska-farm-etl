@@ -13,6 +13,9 @@ class EnvConfig(BaseSettings):
     KAFKA_HOST: str = Field(alias="KAFKA_HOST")
     KAFKA_PORT: str = Field(alias="KAFKA_PORT")
     KAFKA_TOPIC: str = Field(alias="KAFKA_TOPIC")
+    WEBSOCKET_HOST: str = Field(alias="WEBSOCKET_HOST")
+    WEBSOCKET_PORT: str = Field(alias="WEBSOCKET_PORT")
+    BI_TERNAK_TOPIC: str = Field(alias="BI_TERNAK_TOPIC")
 
 
 # Implementation

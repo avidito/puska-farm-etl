@@ -9,6 +9,9 @@ x-puska-etl-common:
     DWH_NAME: ${DWH_NAME:-puska}
     KAFKA_HOST: ${KAFKA_HOST:-kafka}
     KAFKA_PORT: ${KAFKA_PORT:-9092}
+    WEBSOCKET_HOST: ${WEBSOCKET_HOST:-websocket}
+    WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8765}
+    BI_TERNAK_TOPIC: ${BI_TERNAK_TOPIC:-bi-ternak}
 services:
   distribusi:
     build:

@@ -5,6 +5,7 @@ from etl.helper import (
     kafka,
     validator,
 )
+from etl.helper.config import CONFIG
 
 from etl.seq_fact_populasi.modules.entity import (
     FactPopulasiID,
@@ -12,6 +13,7 @@ from etl.seq_fact_populasi.modules.entity import (
 )
 from etl.seq_fact_populasi.modules.repository import (
     FactPopulasiDWHRepository,
+    FactPopulasiKafkaRepository,
 )
 from etl.seq_fact_populasi.modules.usecase import FactPopulasiUsecase
 
@@ -46,36 +48,38 @@ def main(
     }
     """
     
-    try:
-        event_data: KafkaPopulasi = validator_h.validate(data)
-        log_stream_h.start_log("fact_populasi", event_data.source_table, event_data.action, event_data.data)
-        
-        usecase.load(event_data, FactPopulasiID(
-            id_waktu = id_getter_h.get_id_waktu(event_data.data.tgl_pencatatan),
-            id_lokasi = id_getter_h.get_id_lokasi_from_peternakan(event_data.data.id_peternak),
-            id_peternakan = event_data.data.id_peternak,
-        ))
-        
-        log_stream_h.end_log()
-        logger.info("Processed - Status: OK")
-    except Exception as err:
-        logger.error(str(err))
-        logger.info("Processed - Status: FAILED")
+    # try:
+    event_data: KafkaPopulasi = validator_h.validate(data)
+    log_stream_h.start_log("fact_populasi", event_data.source_table, event_data.action, event_data.data)
+    
+    usecase.load(event_data, FactPopulasiID(
+        id_waktu = id_getter_h.get_id_waktu(event_data.data.tgl_pencatatan),
+        id_lokasi = id_getter_h.get_id_lokasi_from_peternakan(event_data.data.id_peternak),
+        id_peternakan = event_data.data.id_peternak,
+    ))
+    
+    log_stream_h.end_log()
+    logger.info("Processed - Status: OK")
+    # except Exception as err:
+    #     logger.error(str(err))
+    #     logger.info("Processed - Status: FAILED")
 
 
 # Runtime
 if __name__ == "__main__":
     logger = log.create_logger()
     dwh = db.DWHHelper()
+    k_ternak = kafka.KafkaPushHelper(CONFIG.BI_TERNAK_TOPIC, logger)
 
+    dwh_repo = FactPopulasiDWHRepository(dwh, logger)
+    kafka_repo = FactPopulasiKafkaRepository(k_ternak, logger)
+    usecase = FactPopulasiUsecase(dwh_repo, kafka_repo, logger)
+
+    # Setup Runtime
     log_stream_h = log.LogStreamHelper(dwh)
     validator_h = validator.ValidatorHelper(logger, KafkaPopulasi)
     id_getter_h = id_getter.IDGetterHelper(dwh, logger)
     
-    dwh_repo = FactPopulasiDWHRepository(dwh, logger)
-    usecase = FactPopulasiUsecase(dwh_repo, logger)
-
-    # Setup Runtime
     kafka_h = kafka.KafkaHelper("seq_fact_populasi", logger)
     kafka_h.run(
         main,
