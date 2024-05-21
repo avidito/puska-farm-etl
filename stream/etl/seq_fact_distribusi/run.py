@@ -1,9 +1,12 @@
+import asyncio
+
 from etl.helper import (
     db,
     id_getter,
     log,
     kafka,
     validator,
+    websocket,
 )
 
 from etl.seq_fact_distribusi.modules.entity import (
@@ -22,6 +25,7 @@ def main(
     log_stream_h: log.LogStreamHelper,
     validator_h: validator.ValidatorHelper,
     id_getter_h: id_getter.IDGetterHelper,
+    websocket_h: websocket.WebSocketHelper,
     usecase: FactDistribusiUsecase
 ):
     """
@@ -54,6 +58,9 @@ def main(
             id_jenis_produk = event_data.data.id_jenis_produk,
         ))
         
+        asyncio.run(websocket_h.send_message({"type": "etl-susu"}))
+        asyncio.run(websocket_h.send_message({"type": "etl-ternak"}))
+        
         log_stream_h.end_log()
         logger.info("Processed - Status: OK")
     except Exception as err:
@@ -69,6 +76,7 @@ if __name__ == "__main__":
     log_stream_h = log.LogStreamHelper(dwh)
     validator_h = validator.ValidatorHelper(logger, KafkaDistribusi)
     id_getter_h = id_getter.IDGetterHelper(dwh, logger)
+    websocket_h = websocket.WebSocketHelper()
     
     dwh_repo = FactDistribusiDWHRepository(dwh, logger)
     usecase = FactDistribusiUsecase(dwh_repo, logger)
@@ -79,5 +87,6 @@ if __name__ == "__main__":
         log_stream_h = log_stream_h,
         validator_h = validator_h,
         id_getter_h = id_getter_h,
+        websocket_h = websocket_h,
         usecase = usecase,
     )

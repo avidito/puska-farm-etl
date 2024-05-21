@@ -10,12 +10,11 @@ class EnvConfig(BaseSettings):
     DWH_HOSTNAME: str = Field(alias="DWH_HOSTNAME")
     DWH_PORT: str = Field(alias="DWH_PORT")
     DWH_NAME: str = Field(alias="DWH_NAME")
-    KAFKA_HOST: str = Field(alias="KAFKA_HOST")
+    KAFKA_HOSTNAME: str = Field(alias="KAFKA_HOSTNAME")
     KAFKA_PORT: str = Field(alias="KAFKA_PORT")
     KAFKA_TOPIC: str = Field(alias="KAFKA_TOPIC")
-    WEBSOCKET_HOST: str = Field(alias="WEBSOCKET_HOST")
-    WEBSOCKET_PORT: str = Field(alias="WEBSOCKET_PORT")
-    BI_TERNAK_TOPIC: str = Field(alias="BI_TERNAK_TOPIC")
+    WS_CONNECT_HOSTNAME: str = Field(alias="WS_CONNECT_HOSTNAME")
+    WS_PORT: int = Field(alias="WS_PORT")
 
 
 # Implementation

@@ -1,16 +1,15 @@
 import json
-from websockets.sync.client import connect
+import websockets
 
 from etl.helper.config import CONFIG
 
-
 class WebSocketHelper:
+    __url: str
+
     def __init__(self):
-        pass
+        self.__url = f"ws://{CONFIG.WS_CONNECT_HOSTNAME}:{CONFIG.WS_PORT}"
+    
 
-
-    def transmit(self, data: dict):
-        ws_url = f"ws://{CONFIG.WEBSOCKET_HOST}:{CONFIG.WEBSOCKET_PORT}"
-        with connect(ws_url) as ws:
-            ws.send(json.dumps(data))
-            ws.recv()
+    async def send_message(self, data: dict):
+        async with websockets.connect(self.__url) as ws:
+            await ws.send(json.dumps(data))

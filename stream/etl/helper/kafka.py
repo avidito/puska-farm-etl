@@ -18,7 +18,7 @@ class KafkaHelper:
         self.__label = label
         self.__logger = logger
         self.__topic = CONFIG.KAFKA_TOPIC
-        self.__host = CONFIG.KAFKA_HOST
+        self.__host = CONFIG.KAFKA_HOSTNAME
         self.__port = CONFIG.KAFKA_PORT
     
 

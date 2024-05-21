@@ -9,10 +9,11 @@ cte_produksi_susu AS (
     s.id_unit_ternak AS id_unit_peternak,
     s.id_jenis_produk,
     s.sumber_pasokan,
-    s.jumlah AS jumlah_produksi
+    SUM(s.jumlah) AS jumlah_produksi
   FROM produksi_susu AS s
   JOIN cte_filter AS fltr
     ON s.tgl_produksi BETWEEN fltr.start_date AND fltr.end_date
+  GROUP BY 1, 2, 3, 4
 ),
 cte_produksi_ternak AS (
   SELECT
@@ -20,10 +21,11 @@ cte_produksi_ternak AS (
     t.id_unit_ternak AS id_unit_peternak,
     t.id_jenis_produk,
     t.sumber_pasokan,
-    t.jumlah AS jumlah_produksi
+    SUM(t.jumlah) AS jumlah_produksi
   FROM produksi_ternak AS t
   JOIN cte_filter AS fltr
     ON t.tgl_produksi BETWEEN fltr.start_date AND fltr.end_date
+  GROUP BY 1, 2, 3, 4
 ),
 cte_summary AS (
   SELECT * FROM cte_produksi_susu
