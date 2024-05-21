@@ -6,7 +6,7 @@ WITH cte_filter AS (
 cte_produksi_susu AS (
   SELECT
     s.tgl_produksi,
-    s.id_unit_ternak AS id_unit_peternak,
+    s.id_unit_ternak AS id_unit_peternakan,
     s.id_jenis_produk,
     s.sumber_pasokan,
     SUM(s.jumlah) AS jumlah_produksi
@@ -18,7 +18,7 @@ cte_produksi_susu AS (
 cte_produksi_ternak AS (
   SELECT
     t.tgl_produksi,
-    t.id_unit_ternak AS id_unit_peternak,
+    t.id_unit_ternak AS id_unit_peternakan,
     t.id_jenis_produk,
     t.sumber_pasokan,
     SUM(t.jumlah) AS jumlah_produksi

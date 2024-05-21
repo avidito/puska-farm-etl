@@ -40,8 +40,8 @@ def main(
         fact_produksi = [
             FactProduksi(
                 id_waktu = id_getter_h.get_id_waktu(row.tgl_produksi),
-                id_lokasi = id_getter_h.get_id_lokasi_from_unit_ternak(row.id_unit_peternak),
-                id_unit_peternak = row.id_unit_peternak,
+                id_lokasi = id_getter_h.get_id_lokasi_from_unit_peternakan(row.id_unit_peternakan),
+                id_unit_peternakan = row.id_unit_peternakan,
                 id_jenis_produk = row.id_jenis_produk,
                 id_sumber_pasokan = id_getter_h.get_id_sumber_pasokan(row.sumber_pasokan),
                 jumlah_produksi = row.jumlah_produksi,

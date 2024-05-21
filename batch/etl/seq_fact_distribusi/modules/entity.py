@@ -7,7 +7,7 @@ from datetime import date
 class FactDistribusi(BaseModel):
     id_waktu: int
     id_lokasi: int
-    id_unit_peternak: int
+    id_unit_peternakan: int
     id_mitra_bisnis: int
     id_jenis_produk: int
     jumlah_distribusi: int
@@ -20,7 +20,7 @@ class FactDistribusi(BaseModel):
 # OPS
 class FactDistribusiCalc(BaseModel):
     tgl_distribusi: date
-    id_unit_peternak: int
+    id_unit_peternakan: int
     id_jenis_produk: int
     id_mitra_bisnis: int
     jumlah_distribusi: int = 0

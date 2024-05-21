@@ -6,7 +6,7 @@ WITH cte_filter AS (
 cte_distribusi_susu AS (
   SELECT
     s.tgl_distribusi,
-    s.id_unit_ternak AS id_unit_peternak,
+    s.id_unit_ternak AS id_unit_peternakan,
     s.id_mitra_bisnis,
     s.id_jenis_produk,
     SUM(s.jumlah) AS jumlah_distribusi,
@@ -22,7 +22,7 @@ cte_distribusi_susu AS (
 cte_distribusi_ternak AS (
   SELECT
     t.tgl_distribusi,
-    t.id_unit_ternak AS id_unit_peternak,
+    t.id_unit_ternak AS id_unit_peternakan,
     t.id_mitra_bisnis,
     t.id_jenis_produk,
     SUM(t.jumlah) AS jumlah_distribusi,

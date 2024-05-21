@@ -45,7 +45,7 @@ class IDGetterHelper:
     
 
     def get_id_lokasi_from_unit_ternak(self, id_unit_ternak: str) -> Optional[int]:
-        results = self.__dwh.run(self.__query_dir, "get_id_lokasi_from_unit_ternak.sql", {
+        results = self.__dwh.run(self.__query_dir, "get_id_lokasi_from_unit_peternakan.sql", {
             "id_unit_ternak": id_unit_ternak
         })
         
