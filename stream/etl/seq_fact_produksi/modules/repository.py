@@ -16,7 +16,7 @@ class FactProduksiDWHRepository:
     PK: List[str] = [
         "id_waktu",
         "id_lokasi",
-        "id_unit_peternak",
+        "id_unit_peternakan",
         "id_jenis_produk",
     ]
 

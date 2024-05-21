@@ -1,1 +1,1 @@
-{"source_table": "produksi", "action": "CREATE", "data": {"tgl_produksi": "2024-03-29", "id_unit_ternak": 1, "id_jenis_produk": 1, "sumber_pasokan": "Pengepul", "jumlah": 2}}
+{"source_table": "produksi", "action": "CREATE", "data": {"tgl_produksi": "2024-03-29", "id_unit_ternak": 2, "id_jenis_produk": 1, "sumber_pasokan": "Pengepul", "jumlah": 2}}

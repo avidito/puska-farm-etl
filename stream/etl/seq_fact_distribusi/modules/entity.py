@@ -6,7 +6,7 @@ from datetime import date
 class FactDistribusiID(BaseModel):
     id_waktu: int
     id_lokasi: int
-    id_unit_peternak: int
+    id_unit_peternakan: int
     id_mitra_bisnis: int
     id_jenis_produk: int
 

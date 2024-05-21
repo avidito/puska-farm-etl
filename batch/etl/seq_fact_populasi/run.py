@@ -1,4 +1,6 @@
 import sys
+import pytz
+from datetime import datetime, timedelta
 from etl.helper import (
     db,
     id_getter,
@@ -75,10 +77,13 @@ if __name__ == "__main__":
 
     # Get runtime params
     _, *sys_params = sys.argv
-    sys_params = sys_params + [None] * (2-len(sys_params))
+    start_date, end_date = sys_params + [None] * (2-len(sys_params))
+    start_date = start_date if (start_date) else (datetime.now(pytz.timezone("Asia/Jakarta")) - timedelta(days=7)).strftime("%Y-%m-%d")
+    end_date = end_date if (end_date) else datetime.now(pytz.timezone("Asia/Jakarta")).strftime("%Y-%m-%d")
+
     params = ParamsFactPopulasi(
-        start_date = sys_params[0],
-        end_date = sys_params[1],
+        start_date = start_date,
+        end_date = end_date,
     )
 
     main(

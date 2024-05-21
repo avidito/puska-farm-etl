@@ -1,4 +1,6 @@
 import os
+import json
+import logging
 from typing import List, Optional
 from datetime import date
 from pydantic import BaseModel
@@ -35,11 +37,14 @@ class DWHHelper:
     # Methods
     def exec(self, query_str: str, params: dict) -> List[dict]:
         query_clause = text(query_str)
-        with self.__db.connect() as conn:
-            results_it = conn.execute(query_clause, params)
-            results = [dict(row) for row in results_it.mappings().all()]
-            conn.commit()
-        return results
+        try:
+            with self.__db.connect() as conn:
+                results_it = conn.execute(query_clause, params)
+                results = [dict(row) for row in results_it.mappings().all()]
+                conn.commit()
+            return results
+        except Exception:
+            raise ValueError(query_str)
 
 
     def run(self, query_dir: str, query_file: str, params: dict) -> Optional[List[dict]]:
@@ -103,7 +108,11 @@ class DWHHelper:
                     isinstance(row[col], str)
                     or isinstance(row[col], date)
                 ):
-                    insert_value.append(f"'{row[col]}'")
+                    insert_value.append(f"'{row[col]}'".replace(":", r"\:"))
+                elif (
+                    isinstance(row[col], dict)
+                ):
+                    insert_value.append(f"'{json.dumps(row[col])}'".replace(":", r"\:"))
             
             insert_value += [
                 "TIMEZONE('Asia/Jakarta', NOW())",

@@ -1,4 +1,5 @@
 import os
+import json
 from typing import List, Optional
 from datetime import date
 from pydantic import BaseModel
@@ -116,7 +117,11 @@ class DWHHelper:
                     isinstance(row[col], str)
                     or isinstance(row[col], date)
                 ):
-                    insert_value.append(f"'{row[col]}'")
+                    insert_value.append(f"'{row[col]}'".replace(":", r"\:"))
+                elif (
+                    isinstance(row[col], dict)
+                ):
+                    insert_value.append(f"'{json.dumps(row[col])}'".replace(":", r"\:"))
             
             insert_value += [
                 "TIMEZONE('Asia/Jakarta', NOW())",

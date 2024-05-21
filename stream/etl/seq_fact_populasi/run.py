@@ -1,10 +1,14 @@
+import asyncio
+
 from etl.helper import (
     db,
     id_getter,
     log,
     kafka,
     validator,
+    websocket,
 )
+from etl.helper.config import CONFIG
 
 from etl.seq_fact_populasi.modules.entity import (
     FactPopulasiID,
@@ -12,6 +16,7 @@ from etl.seq_fact_populasi.modules.entity import (
 )
 from etl.seq_fact_populasi.modules.repository import (
     FactPopulasiDWHRepository,
+    FactPopulasiKafkaRepository,
 )
 from etl.seq_fact_populasi.modules.usecase import FactPopulasiUsecase
 
@@ -22,6 +27,7 @@ def main(
     log_stream_h: log.LogStreamHelper,
     validator_h: validator.ValidatorHelper,
     id_getter_h: id_getter.IDGetterHelper,
+    websocket_h: websocket.WebSocketHelper,
     usecase: FactPopulasiUsecase
 ):
     """
@@ -56,6 +62,9 @@ def main(
             id_peternakan = event_data.data.id_peternak,
         ))
         
+        asyncio.run(websocket_h.send_message({"type": "etl-susu"}))
+        asyncio.run(websocket_h.send_message({"type": "etl-ternak"}))
+        
         log_stream_h.end_log()
         logger.info("Processed - Status: OK")
     except Exception as err:
@@ -67,20 +76,24 @@ def main(
 if __name__ == "__main__":
     logger = log.create_logger()
     dwh = db.DWHHelper()
+    k_ternak = kafka.KafkaPushHelper(CONFIG.BI_TERNAK_TOPIC, logger)
 
+    dwh_repo = FactPopulasiDWHRepository(dwh, logger)
+    kafka_repo = FactPopulasiKafkaRepository(k_ternak, logger)
+    usecase = FactPopulasiUsecase(dwh_repo, kafka_repo, logger)
+
+    # Setup Runtime
     log_stream_h = log.LogStreamHelper(dwh)
     validator_h = validator.ValidatorHelper(logger, KafkaPopulasi)
     id_getter_h = id_getter.IDGetterHelper(dwh, logger)
+    websocket_h = websocket.WebSocketHelper()
     
-    dwh_repo = FactPopulasiDWHRepository(dwh, logger)
-    usecase = FactPopulasiUsecase(dwh_repo, logger)
-
-    # Setup Runtime
     kafka_h = kafka.KafkaHelper("seq_fact_populasi", logger)
     kafka_h.run(
         main,
         log_stream_h = log_stream_h,
         validator_h = validator_h,
         id_getter_h = id_getter_h,
+        websocket_h = websocket_h,
         usecase = usecase,
     )

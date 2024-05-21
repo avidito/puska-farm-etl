@@ -1,4 +1,6 @@
 import sys
+import pytz
+from datetime import datetime, timedelta
 from etl.helper import (
     db,
     id_getter,
@@ -38,8 +40,8 @@ def main(
         fact_distribusi = [
             FactDistribusi(
                 id_waktu = id_getter_h.get_id_waktu(row.tgl_distribusi),
-                id_lokasi = id_getter_h.get_id_lokasi_from_unit_ternak(row.id_unit_peternak),
-                id_unit_peternak = row.id_unit_peternak,
+                id_lokasi = id_getter_h.get_id_lokasi_from_unit_peternakan(row.id_unit_peternakan),
+                id_unit_peternakan = row.id_unit_peternakan,
                 id_mitra_bisnis = row.id_mitra_bisnis,
                 id_jenis_produk = row.id_jenis_produk,
                 jumlah_distribusi = row.jumlah_distribusi,
@@ -74,10 +76,13 @@ if __name__ == "__main__":
 
     # Get runtime params
     _, *sys_params = sys.argv
-    sys_params = sys_params + [None] * (2-len(sys_params))
+    start_date, end_date = sys_params + [None] * (2-len(sys_params))
+    start_date = start_date if (start_date) else (datetime.now(pytz.timezone("Asia/Jakarta")) - timedelta(days=7)).strftime("%Y-%m-%d")
+    end_date = end_date if (end_date) else datetime.now(pytz.timezone("Asia/Jakarta")).strftime("%Y-%m-%d")
+
     params = ParamsFactDistribusi(
-        start_date = sys_params[0],
-        end_date = sys_params[1],
+        start_date = start_date,
+        end_date = end_date,
     )
 
     main(
