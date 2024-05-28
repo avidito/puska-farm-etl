@@ -7,13 +7,11 @@ from etl.seq_fact_populasi.modules.entity import (
 )
 from etl.seq_fact_populasi.modules.repository import (
     FactPopulasiDWHRepository,
-    FactPopulasiKafkaRepository,
 )
 
 
 class FactPopulasiUsecase:
     __dwh_repo: FactPopulasiDWHRepository
-    __kafka_repo: FactPopulasiKafkaRepository
     __logger: Logger
 
     JENIS_KELAMIN = [
@@ -31,9 +29,8 @@ class FactPopulasiUsecase:
         "Dewasa"
     ]
 
-    def __init__(self, dwh_repo: FactPopulasiDWHRepository, kafka_repo: FactPopulasiKafkaRepository, logger: Logger):
+    def __init__(self, dwh_repo: FactPopulasiDWHRepository, logger: Logger):
         self.__dwh_repo = dwh_repo
-        self.__kafka_repo = kafka_repo
         self.__logger = logger
     
 
@@ -74,6 +71,3 @@ class FactPopulasiUsecase:
                     
                     self.__logger.info(f"Loading data to 'Fact Populasi'")
                     self.__dwh_repo.load(populasi)
-
-                    self.__logger.info(f"Push data to 'BI Ternak'")
-                    self.__kafka_repo.push(populasi)

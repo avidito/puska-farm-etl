@@ -16,7 +16,6 @@ from etl.seq_fact_populasi.modules.entity import (
 )
 from etl.seq_fact_populasi.modules.repository import (
     FactPopulasiDWHRepository,
-    FactPopulasiKafkaRepository,
 )
 from etl.seq_fact_populasi.modules.usecase import FactPopulasiUsecase
 
@@ -76,11 +75,9 @@ def main(
 if __name__ == "__main__":
     logger = log.create_logger()
     dwh = db.DWHHelper()
-    k_ternak = kafka.KafkaPushHelper(CONFIG.BI_TERNAK_TOPIC, logger)
 
     dwh_repo = FactPopulasiDWHRepository(dwh, logger)
-    kafka_repo = FactPopulasiKafkaRepository(k_ternak, logger)
-    usecase = FactPopulasiUsecase(dwh_repo, kafka_repo, logger)
+    usecase = FactPopulasiUsecase(dwh_repo, logger)
 
     # Setup Runtime
     log_stream_h = log.LogStreamHelper(dwh)

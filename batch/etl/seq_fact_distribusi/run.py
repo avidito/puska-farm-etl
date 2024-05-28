@@ -40,8 +40,8 @@ def main(
         fact_distribusi = [
             FactDistribusi(
                 id_waktu = id_getter_h.get_id_waktu(row.tgl_distribusi),
-                id_lokasi = id_getter_h.get_id_lokasi_from_unit_peternakan(row.id_unit_peternakan),
-                id_unit_peternakan = row.id_unit_peternakan,
+                id_lokasi = id_getter_h.get_id_lokasi_from_unit_peternak(row.id_unit_peternak),
+                id_unit_peternak = row.id_unit_peternak,
                 id_mitra_bisnis = row.id_mitra_bisnis,
                 id_jenis_produk = row.id_jenis_produk,
                 jumlah_distribusi = row.jumlah_distribusi,

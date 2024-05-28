@@ -48,18 +48,3 @@ class FactPopulasiDWHRepository:
             pk = self.PK,
             update_insert = True
         )
-
-
-class FactPopulasiKafkaRepository:
-    __k_ternak: KafkaPushHelper
-    __logger: Logger
-
-    def __init__(self, k_ternak: KafkaPushHelper, logger: Logger):
-        self.__k_ternak = k_ternak
-        self.__logger = logger
-    
-
-    def push(self, fact_populasi: FactPopulasi):
-        self.__logger.debug("Push data to Ternak")
-        data = fact_populasi.model_dump_json()
-        self.__k_ternak.push(data)

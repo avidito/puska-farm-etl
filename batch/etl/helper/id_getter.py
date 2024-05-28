@@ -44,9 +44,9 @@ class IDGetterHelper:
             self.__logger.error(f"No lokasi for 'provinsi' = '{provinsi}', 'kabupaten_kota' = '{kabupaten_kota}', 'kecamatan' = '{kecamatan}'")
     
 
-    def get_id_lokasi_from_unit_peternakan(self, id_unit_peternakan: str) -> Optional[int]:
-        results = self.__dwh.run(self.__query_dir, "get_id_lokasi_from_unit_peternakan.sql", {
-            "id_unit_peternakan": id_unit_peternakan
+    def get_id_lokasi_from_unit_peternak(self, id_unit_peternak: str) -> Optional[int]:
+        results = self.__dwh.run(self.__query_dir, "get_id_lokasi_from_unit_peternak.sql", {
+            "id_unit_peternak": id_unit_peternak
         })
         
         if (results):
@@ -57,7 +57,7 @@ class IDGetterHelper:
             }
             return self.get_id_lokasi(**params)
         else:
-            self.__logger.error(f"No unit_peternakan for 'id_unit_peternakan' = {id_unit_peternakan}")
+            self.__logger.error(f"No unit_peternak for 'id_unit_peternak' = {id_unit_peternak}")
     
 
     def get_id_lokasi_from_peternakan(self, id_peternakan: str) -> Optional[int]:
