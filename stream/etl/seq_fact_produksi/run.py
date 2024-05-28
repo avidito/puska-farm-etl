@@ -57,8 +57,8 @@ def main(
             id_sumber_pasokan = id_getter_h.get_id_sumber_pasokan(event_data.data.sumber_pasokan)
         ))
 
-        asyncio.run(websocket_h.send_message({"type": "etl-susu"}))
-        asyncio.run(websocket_h.send_message({"type": "etl-ternak"}))
+        # asyncio.run(websocket_h.send_message({"type": "etl-susu"}))
+        # asyncio.run(websocket_h.send_message({"type": "etl-ternak"}))
         
         log_stream_h.end_log()
         logger.info("Processed - Status: OK")

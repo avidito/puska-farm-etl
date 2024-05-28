@@ -57,12 +57,12 @@ def main(
         
         usecase.load(event_data, FactPopulasiID(
             id_waktu = id_getter_h.get_id_waktu(event_data.data.tgl_pencatatan),
-            id_lokasi = id_getter_h.get_id_lokasi_from_peternakan(event_data.data.id_peternak),
+            id_lokasi = id_getter_h.get_id_lokasi_from_peternak(event_data.data.id_peternak),
             id_peternakan = event_data.data.id_peternak,
         ))
         
-        asyncio.run(websocket_h.send_message({"type": "etl-susu"}))
-        asyncio.run(websocket_h.send_message({"type": "etl-ternak"}))
+        # asyncio.run(websocket_h.send_message({"type": "etl-susu"}))
+        # asyncio.run(websocket_h.send_message({"type": "etl-ternak"}))
         
         log_stream_h.end_log()
         logger.info("Processed - Status: OK")

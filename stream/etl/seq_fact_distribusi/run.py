@@ -58,8 +58,8 @@ def main(
             id_jenis_produk = event_data.data.id_jenis_produk,
         ))
         
-        asyncio.run(websocket_h.send_message({"type": "etl-susu"}))
-        asyncio.run(websocket_h.send_message({"type": "etl-ternak"}))
+        # asyncio.run(websocket_h.send_message({"type": "etl-susu"}))
+        # asyncio.run(websocket_h.send_message({"type": "etl-ternak"}))
         
         log_stream_h.end_log()
         logger.info("Processed - Status: OK")
