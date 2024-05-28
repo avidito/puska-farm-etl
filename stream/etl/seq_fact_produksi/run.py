@@ -51,7 +51,7 @@ def main(
 
         usecase.load(event_data, FactProduksiID(
             id_waktu = id_getter_h.get_id_waktu(event_data.data.tgl_produksi),
-            id_lokasi = id_getter_h.get_id_lokasi_from_unit_ternak(event_data.data.id_unit_ternak),
+            id_lokasi = id_getter_h.get_id_lokasi_from_unit_peternak(event_data.data.id_unit_ternak),
             id_unit_peternak = event_data.data.id_unit_ternak,
             id_jenis_produk = event_data.data.id_jenis_produk,
             id_sumber_pasokan = id_getter_h.get_id_sumber_pasokan(event_data.data.sumber_pasokan)

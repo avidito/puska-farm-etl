@@ -52,7 +52,7 @@ def main(
         
         usecase.load(event_data, FactDistribusiID(
             id_waktu = id_getter_h.get_id_waktu(event_data.data.tgl_distribusi),
-            id_lokasi = id_getter_h.get_id_lokasi_from_unit_ternak(event_data.data.id_unit_ternak),
+            id_lokasi = id_getter_h.get_id_lokasi_from_unit_peternak(event_data.data.id_unit_ternak),
             id_unit_peternak = event_data.data.id_unit_ternak,
             id_mitra_bisnis = event_data.data.id_mitra_bisnis,
             id_jenis_produk = event_data.data.id_jenis_produk,
