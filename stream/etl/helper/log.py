@@ -71,7 +71,7 @@ class LogStreamHelper:
 
     def end_log(self):
         end_tm = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
-        duration = ((end_tm - self.__entity.start_tm).total_seconds()) * 1000 # Convert into milliseconds
+        duration = ((end_tm - self.__entity.start_tm).total_seconds())
 
         self.__entity.end_tm = end_tm
         self.__entity.duration = duration
