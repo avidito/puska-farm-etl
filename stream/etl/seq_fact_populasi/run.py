@@ -1,14 +1,10 @@
-import asyncio
-
 from etl.helper import (
     db,
     id_getter,
     log,
     kafka,
     validator,
-    websocket,
 )
-from etl.helper.config import CONFIG
 
 from etl.seq_fact_populasi.modules.entity import (
     FactPopulasiID,
@@ -26,7 +22,6 @@ def main(
     log_stream_h: log.LogStreamHelper,
     validator_h: validator.ValidatorHelper,
     id_getter_h: id_getter.IDGetterHelper,
-    websocket_h: websocket.WebSocketHelper,
     usecase: FactPopulasiUsecase
 ):
     """
@@ -57,12 +52,9 @@ def main(
         
         usecase.load(event_data, FactPopulasiID(
             id_waktu = id_getter_h.get_id_waktu(event_data.data.tgl_pencatatan),
-            id_lokasi = id_getter_h.get_id_lokasi_from_peternak(event_data.data.id_peternak),
+            id_lokasi = id_getter_h.get_id_lokasi_from_peternakan(event_data.data.id_peternak),
             id_peternakan = event_data.data.id_peternak,
         ))
-        
-        # asyncio.run(websocket_h.send_message({"type": "etl-susu"}))
-        # asyncio.run(websocket_h.send_message({"type": "etl-ternak"}))
         
         log_stream_h.end_log()
         logger.info("Processed - Status: OK")
@@ -83,7 +75,6 @@ if __name__ == "__main__":
     log_stream_h = log.LogStreamHelper(dwh)
     validator_h = validator.ValidatorHelper(logger, KafkaPopulasi)
     id_getter_h = id_getter.IDGetterHelper(dwh, logger)
-    websocket_h = websocket.WebSocketHelper()
     
     kafka_h = kafka.KafkaHelper("seq_fact_populasi", logger)
     kafka_h.run(
@@ -91,6 +82,5 @@ if __name__ == "__main__":
         log_stream_h = log_stream_h,
         validator_h = validator_h,
         id_getter_h = id_getter_h,
-        websocket_h = websocket_h,
         usecase = usecase,
     )

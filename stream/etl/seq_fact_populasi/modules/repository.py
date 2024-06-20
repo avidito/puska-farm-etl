@@ -3,7 +3,6 @@ from logging import Logger
 from typing import List, Optional
 
 from etl.helper.db import DWHHelper
-from etl.helper.kafka import KafkaPushHelper
 from etl.seq_fact_populasi.modules.entity import (
     FactPopulasi,
     FactPopulasiID,

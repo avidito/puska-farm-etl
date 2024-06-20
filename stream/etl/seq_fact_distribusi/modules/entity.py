@@ -6,18 +6,18 @@ from datetime import date
 class FactDistribusiID(BaseModel):
     id_waktu: int
     id_lokasi: int
-    id_unit_peternak: int
+    id_unit_peternakan: int
     id_mitra_bisnis: int
     id_jenis_produk: int
 
 
 # DWH
 class FactDistribusi(FactDistribusiID):
-    jumlah_distribusi: int
+    jumlah_distribusi: float
     harga_minimum: int
     harga_maximum: int
     harga_rata_rata: float
-    jumlah_penjualan: int
+    jumlah_penjualan: float
 
 
 # OPS
@@ -26,7 +26,7 @@ class Distribusi(BaseModel):
     id_unit_ternak: int
     id_jenis_produk: int
     id_mitra_bisnis: int
-    jumlah: int
+    jumlah: float
     harga_berlaku: int
 
 
