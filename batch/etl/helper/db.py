@@ -13,26 +13,26 @@ from etl.helper.config import CONFIG
 # Getter
 def get_dwh() -> Engine:
     engine = create_engine(
-        "{dialect}://{username}:{password}@{hostname}:{port}/{name}".format(
+        "{dialect}://{user}:{password}@{host}:{port}/{db}".format(
             dialect = CONFIG.DWH_DIALECT,
-            username = CONFIG.DWH_USERNAME,
+            user = CONFIG.DWH_USER,
             password = quote_plus(CONFIG.DWH_PASSWORD.get_secret_value()),
-            hostname = CONFIG.DWH_HOSTNAME,
+            host = CONFIG.DWH_HOST,
             port = CONFIG.DWH_PORT,
-            name = CONFIG.DWH_NAME,
+            db = CONFIG.DWH_DB,
         )
     )
     return engine
 
 def get_ops() -> Engine:
     engine = create_engine(
-        "{dialect}://{username}:{password}@{hostname}:{port}/{name}".format(
+        "{dialect}://{user}:{password}@{host}:{port}/{db}".format(
             dialect = CONFIG.OPS_DIALECT,
-            username = CONFIG.OPS_USERNAME,
+            user = CONFIG.OPS_USER,
             password = quote_plus(CONFIG.OPS_PASSWORD.get_secret_value()),
-            hostname = CONFIG.OPS_HOSTNAME,
+            host = CONFIG.OPS_HOST,
             port = CONFIG.OPS_PORT,
-            name = CONFIG.OPS_NAME,
+            db = CONFIG.OPS_DB,
         )
     )
     return engine
