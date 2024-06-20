@@ -27,7 +27,7 @@ class FactDistribusiUsecase:
         distribusi = FactDistribusi(
             id_waktu = id_list.id_waktu,
             id_lokasi = id_list.id_lokasi,
-            id_unit_peternak = id_list.id_unit_peternak,
+            id_unit_peternakan = id_list.id_unit_peternakan,
             id_mitra_bisnis = id_list.id_mitra_bisnis,
             id_jenis_produk = id_list.id_jenis_produk,
             jumlah_distribusi = (exists_data.jumlah_distribusi + data.jumlah) if (exists_data) else data.jumlah,

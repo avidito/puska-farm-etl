@@ -14,13 +14,13 @@ from etl.helper.config import CONFIG
 # Getter
 def get_dwh() -> Engine:
     engine = create_engine(
-        "{dialect}://{username}:{password}@{hostname}:{port}/{name}".format(
+        "{dialect}://{user}:{password}@{host}:{port}/{db}".format(
             dialect = CONFIG.DWH_DIALECT,
-            username = CONFIG.DWH_USERNAME,
+            user = CONFIG.DWH_USER,
             password = quote_plus(CONFIG.DWH_PASSWORD.get_secret_value()),
-            hostname = CONFIG.DWH_HOSTNAME,
+            host = CONFIG.DWH_HOST,
             port = CONFIG.DWH_PORT,
-            name = CONFIG.DWH_NAME,
+            db = CONFIG.DWH_NAME,
         )
     )
     return engine

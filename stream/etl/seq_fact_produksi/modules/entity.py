@@ -6,14 +6,14 @@ from datetime import date
 class FactProduksiID(BaseModel):
     id_waktu: int
     id_lokasi: int
-    id_unit_peternak: int
+    id_unit_peternakan: int
     id_jenis_produk: int
     id_sumber_pasokan: int
 
 
 # DWH
 class FactProduksi(FactProduksiID):
-    jumlah_produksi: int
+    jumlah_produksi: float
 
 
 # OPS
@@ -22,7 +22,7 @@ class Produksi(BaseModel):
     id_unit_ternak: int
     id_jenis_produk: int
     sumber_pasokan: str
-    jumlah: int
+    jumlah: float
 
 
 # Kafka
