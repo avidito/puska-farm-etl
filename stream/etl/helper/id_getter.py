@@ -73,7 +73,7 @@ class IDGetterHelper:
             }
             return self.get_id_lokasi(**params)
         else:
-            self.__logger.error(f"No peternak for 'id_peternak' = '{id_peternak}'")
+            self.__logger.error(f"No peternak for 'id_peternakan' = '{id_peternakan}'")
 
 
     def get_id_sumber_pasokan(self, sumber_pasokan: str) -> Optional[int]:
