@@ -10,11 +10,11 @@ class FactPopulasi(BaseModel):
     jenis_kelamin: str
     tipe_ternak: str
     tipe_usia: str
-    jumlah_lahir: int
-    jumlah_mati: int
-    jumlah_masuk: int
-    jumlah_keluar: int
-    jumlah: int
+    jumlah_lahir: Optional[int] = None
+    jumlah_mati: Optional[int] = None
+    jumlah_masuk: Optional[int] = None
+    jumlah_keluar: Optional[int] = None
+    jumlah: Optional[int] = None
 
 # OPS
 class FactPopulasiCalc(BaseModel):
@@ -23,11 +23,11 @@ class FactPopulasiCalc(BaseModel):
     jenis_kelamin: str
     tipe_ternak: str
     tipe_usia: str
-    jumlah_lahir: int = 0
-    jumlah_mati: int = 0
-    jumlah_masuk: int = 0
-    jumlah_keluar: int = 0
-    jumlah: int = 0
+    jumlah_lahir: Optional[int] = None
+    jumlah_mati: Optional[int] = None
+    jumlah_masuk: Optional[int] = None
+    jumlah_keluar: Optional[int] = None
+    jumlah: Optional[int] = None
 
 
 # Input
