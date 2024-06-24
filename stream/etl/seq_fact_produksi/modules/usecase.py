@@ -1,37 +1,45 @@
-from logging import Logger
+from datetime import date
 
 from etl.seq_fact_produksi.modules.entity import (
+    Produksi,
     FactProduksi,
-    FactProduksiID,
-    KafkaProduksi,
 )
 from etl.seq_fact_produksi.modules.repository import (
     FactProduksiDWHRepository,
+    FactProduksiMLRepository
 )
 
 
 class FactProduksiUsecase:
     __dwh_repo: FactProduksiDWHRepository
-    __logger: Logger
+    __ml_repo: FactProduksiMLRepository
 
-    def __init__(self, dwh_repo: FactProduksiDWHRepository, logger: Logger):
+    def __init__(self, dwh_repo: FactProduksiDWHRepository, ml_repo: FactProduksiMLRepository):
         self.__dwh_repo = dwh_repo
-        self.__logger = logger
+        self.__ml_repo = ml_repo
     
 
     # Methods
-    def load(self, kafka_produksi: KafkaProduksi, id_list: FactProduksiID):
-        exists_data = self.__dwh_repo.get(id_list)
-        data = kafka_produksi.data
-        
-        produksi = FactProduksi(
-            id_waktu = id_list.id_waktu,
-            id_lokasi = id_list.id_lokasi,
-            id_unit_peternakan = id_list.id_unit_peternakan,
-            id_jenis_produk = id_list.id_jenis_produk,
-            id_sumber_pasokan = id_list.id_sumber_pasokan,
-            jumlah_produksi = (exists_data.jumlah_produksi + data.jumlah) if (exists_data) else data.jumlah,
-        )
-        
-        self.__logger.info(f"Loading data to 'Fact Produksi'")
-        self.__dwh_repo.load(produksi)
+    def get_or_create(
+        self,
+        tgl_produksi: date,
+        id_unit_ternak: int,
+        id_jenis_produk: int,
+        sumber_pasokan: str,
+    ) -> FactProduksi:
+        fact_produksi_id = self.__dwh_repo.convert_id(tgl_produksi, id_unit_ternak, id_jenis_produk, sumber_pasokan)
+        fact_produksi = self.__dwh_repo.get_or_create(fact_produksi_id)
+        return fact_produksi
+
+
+    def transform(self, new_produksi: Produksi, fact_produksi: FactProduksi) -> FactProduksi:
+        fact_produksi.jumlah_produksi = fact_produksi.jumlah_produksi + new_produksi.jumlah
+        return fact_produksi
+
+
+    def load(self, fact_produksi: FactProduksi):
+        self.__dwh_repo.load(fact_produksi)
+
+
+    def trigger_ml(self, id_waktu: int, id_lokasi: int, id_unit_peternakan: int):
+        self.__ml_repo.trigger_ml_susu(id_waktu, id_lokasi, id_unit_peternakan)

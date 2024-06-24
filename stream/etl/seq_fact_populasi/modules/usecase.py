@@ -1,9 +1,10 @@
-from logging import Logger
+from typing import Dict
+from datetime import date
 
 from etl.seq_fact_populasi.modules.entity import (
+    HistoryPopulasi,
     FactPopulasi,
     FactPopulasiID,
-    KafkaPopulasi,
 )
 from etl.seq_fact_populasi.modules.repository import (
     FactPopulasiDWHRepository,
@@ -12,62 +13,81 @@ from etl.seq_fact_populasi.modules.repository import (
 
 class FactPopulasiUsecase:
     __dwh_repo: FactPopulasiDWHRepository
-    __logger: Logger
+
+    TIPE_TERNAK = [
+        "Pedaging",
+        "Perah",
+    ]
 
     JENIS_KELAMIN = [
         "Jantan",
         "Betina",
     ]
 
-    TIPE_TERNAK = [
-        "Perah",
-        "Pedaging",
-    ]
-
     TIPE_USIA = [
         "Anakan",
-        "Dewasa"
+        "Dewasa",
     ]
 
-    def __init__(self, dwh_repo: FactPopulasiDWHRepository, logger: Logger):
+    def __init__(self, dwh_repo: FactPopulasiDWHRepository):
         self.__dwh_repo = dwh_repo
-        self.__logger = logger
     
 
     # Methods
-    def load(self, kafka_populasi: KafkaPopulasi, id_list: FactPopulasiID):
-        data = kafka_populasi.data
+    def get_or_create(
+        self,
+        tgl_pencatatan: date,
+        id_peternak: int,
+    ) -> Dict[str, FactPopulasi]:
+        fact_populasi_base_id = self.__dwh_repo.convert_id(tgl_pencatatan, id_peternak)
+        fact_populasi_id = {
+            "pedaging_jantan_anakan": fact_populasi_base_id.model_copy(update={"tipe_ternak":"Pedaging", "jenis_kelamin":"Jantan", "tipe_usia":"Anakan"}),
+            "pedaging_jantan_dewasa": fact_populasi_base_id.model_copy(update={"tipe_ternak":"Pedaging", "jenis_kelamin":"Jantan", "tipe_usia":"Dewasa"}),
+            "pedaging_betina_anakan": fact_populasi_base_id.model_copy(update={"tipe_ternak":"Pedaging", "jenis_kelamin":"Betina", "tipe_usia":"Anakan"}),
+            "pedaging_betina_dewasa": fact_populasi_base_id.model_copy(update={"tipe_ternak":"Pedaging", "jenis_kelamin":"Betina", "tipe_usia":"Dewasa"}),
+            "perah_jantan_anakan": fact_populasi_base_id.model_copy(update={"tipe_ternak":"Perah", "jenis_kelamin":"Jantan", "tipe_usia":"Anakan"}),
+            "perah_jantan_dewasa": fact_populasi_base_id.model_copy(update={"tipe_ternak":"Perah", "jenis_kelamin":"Jantan", "tipe_usia":"Dewasa"}),
+            "perah_betina_anakan": fact_populasi_base_id.model_copy(update={"tipe_ternak":"Perah", "jenis_kelamin":"Betina", "tipe_usia":"Anakan"}),
+            "perah_betina_dewasa": fact_populasi_base_id.model_copy(update={"tipe_ternak":"Perah", "jenis_kelamin":"Betina", "tipe_usia":"Dewasa"}),
+        }
 
-        for jk in self.JENIS_KELAMIN:
-            for tt in self.TIPE_TERNAK:
-                for tu in self.TIPE_USIA:
-                    value_column = "_".join(filter(None, [
-                        "jml",
-                        tt.lower(),
-                        tu.lower() if tu == 'Anakan' else None,
-                        jk.lower()
-                    ]))
+        fact_populasi = {
+            k: self.__dwh_repo.get_or_create(id)
+            for k, id in fact_populasi_id.items()
+        }
+        return fact_populasi
 
-                    id_list_ext = id_list.model_copy(update={
-                        "jenis_kelamin": jk,
-                        "tipe_ternak": tt,
-                        "tipe_usia": tu
-                    })
-                    exists_data = self.__dwh_repo.get(id_list_ext)
-                    
-                    populasi = FactPopulasi(
-                        id_waktu = id_list_ext.id_waktu,
-                        id_lokasi = id_list_ext.id_lokasi,
-                        id_peternakan = id_list_ext.id_peternakan,
-                        jenis_kelamin = id_list_ext.jenis_kelamin,
-                        tipe_ternak = id_list_ext.tipe_ternak,
-                        tipe_usia = id_list_ext.tipe_usia,
-                        jumlah_lahir = exists_data.jumlah_lahir if (exists_data) else 0,
-                        jumlah_mati = exists_data.jumlah_mati if (exists_data) else 0, 
-                        jumlah_masuk = exists_data.jumlah_masuk if (exists_data) else 0, 
-                        jumlah_keluar = exists_data.jumlah_keluar if (exists_data) else 0, 
-                        jumlah = getattr(data, value_column, None)
-                    )
-                    
-                    self.__logger.info(f"Loading data to 'Fact Populasi'")
-                    self.__dwh_repo.load(populasi)
+    def transform_jumlah(self, new_populasi: HistoryPopulasi, fact_populasi: FactPopulasi) -> FactPopulasi:
+        tipe_ternak = fact_populasi.tipe_ternak
+        jenis_kelamin = fact_populasi.jenis_kelamin
+        tipe_usia = fact_populasi.tipe_usia
+
+        if tipe_ternak == "Pedaging":
+            if jenis_kelamin == "Jantan":
+                if tipe_usia == "Anakan":
+                    new_jumlah = new_populasi.jml_pedaging_anakan_jantan
+                elif tipe_usia == "Dewasa":
+                    new_jumlah = new_populasi.jml_pedaging_jantan
+            elif jenis_kelamin == "Betina":
+                if tipe_usia == "Anakan":
+                    new_jumlah = new_populasi.jml_pedaging_anakan_betina
+                elif tipe_usia == "Dewasa":
+                    new_jumlah = new_populasi.jml_pedaging_betina
+        elif tipe_ternak == "Perah":
+            if jenis_kelamin == "Jantan":
+                if tipe_usia == "Anakan":
+                    new_jumlah = new_populasi.jml_pedaging_anakan_jantan
+                elif tipe_usia == "Dewasa":
+                    new_jumlah = new_populasi.jml_pedaging_jantan
+            elif jenis_kelamin == "Betina":
+                if tipe_usia == "Anakan":
+                    new_jumlah = new_populasi.jml_pedaging_anakan_betina
+                elif tipe_usia == "Dewasa":
+                    new_jumlah = new_populasi.jml_pedaging_betina
+        
+        fact_populasi.jumlah = new_jumlah
+        return fact_populasi
+
+
+    def load(self, fact_populasi: FactPopulasi):
+        self.__dwh_repo.load(fact_populasi)

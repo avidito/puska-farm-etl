@@ -14,6 +14,7 @@ class IDGetterHelper:
     def __init__(self, dwh: DWHHelper, logger: Logger):
         self.__dwh = dwh
         self.__logger = logger
+
         self.__query_dir = os.path.join(os.path.dirname(__file__), "query")
 
 

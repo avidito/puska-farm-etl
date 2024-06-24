@@ -1,29 +1,19 @@
 from etl.helper import (
+    api,
     db,
-    id_getter,
     log,
     kafka,
-    validator,
 )
 
-from etl.seq_fact_produksi.modules.entity import (
-    FactProduksiID,
-    KafkaProduksi,
-)
+from etl.seq_fact_produksi.modules.entity import KafkaProduksi
 from etl.seq_fact_produksi.modules.repository import (
     FactProduksiDWHRepository,
+    FactProduksiMLRepository,
 )
 from etl.seq_fact_produksi.modules.usecase import FactProduksiUsecase
 
-
 # Main Sequence
-def main(
-    data: dict,
-    log_stream_h: log.LogStreamHelper,
-    validator_h: validator.ValidatorHelper,
-    id_getter_h: id_getter.IDGetterHelper,
-    usecase: FactProduksiUsecase
-):
+def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase):
     """
     Fact Produksi - Streaming ETL
 
@@ -42,18 +32,23 @@ def main(
     """
     
     try:
-        event_data: KafkaProduksi = validator_h.validate(data)
-        log_stream_h.start_log("fact_produksi", event_data.source_table, event_data.action, event_data.data)
+        # Create/Update DWH
+        fact_produksi = produksi_usecase.get_or_create(
+            tgl_produksi = ev_data.data.tgl_produksi,
+            id_unit_ternak = ev_data.data.id_unit_ternak,
+            id_jenis_produk = ev_data.data.id_jenis_produk,
+            sumber_pasokan = ev_data.data.sumber_pasokan,
+        )
+        fact_produksi = produksi_usecase.transform(ev_data.data, fact_produksi)
+        produksi_usecase.load(fact_produksi)
 
-        usecase.load(event_data, FactProduksiID(
-            id_waktu = id_getter_h.get_id_waktu(event_data.data.tgl_produksi),
-            id_lokasi = id_getter_h.get_id_lokasi_from_unit_peternakan(event_data.data.id_unit_ternak),
-            id_unit_peternakan = event_data.data.id_unit_ternak,
-            id_jenis_produk = event_data.data.id_jenis_produk,
-            id_sumber_pasokan = id_getter_h.get_id_sumber_pasokan(event_data.data.sumber_pasokan)
-        ))
-        
-        log_stream_h.end_log()
+        # Trigger ML API
+        produksi_usecase.trigger_ml(
+            id_waktu = fact_produksi.id_waktu,
+            id_lokasi = fact_produksi.id_lokasi,
+            id_unit_peternakan = fact_produksi.id_unit_peternakan,
+        )
+
         logger.info("Processed - Status: OK")
     except Exception as err:
         logger.error(str(err))
@@ -63,21 +58,15 @@ def main(
 # Runtime
 if __name__ == "__main__":
     logger = log.create_logger()
-    dwh = db.DWHHelper()
-
-    log_stream_h = log.LogStreamHelper(dwh)
-    validator_h = validator.ValidatorHelper(logger, KafkaProduksi)
-    id_getter_h = id_getter.IDGetterHelper(dwh, logger)
     
+    dwh = db.DWHHelper()
     dwh_repo = FactProduksiDWHRepository(dwh, logger)
-    usecase = FactProduksiUsecase(dwh_repo, logger)
+    
+    ml = api.MLHelper()
+    ml_repo = FactProduksiMLRepository(ml, logger)
+    
+    produksi_usecase = FactProduksiUsecase(dwh_repo, ml_repo)
 
     # Setup Runtime
     kafka_h = kafka.KafkaHelper("seq_fact_produksi", logger)
-    kafka_h.run(
-        main,
-        log_stream_h = log_stream_h,
-        validator_h = validator_h,
-        id_getter_h = id_getter_h,
-        usecase = usecase,
-    )
+    kafka_h.run(main, Validator=KafkaProduksi, produksi_usecase=produksi_usecase)
