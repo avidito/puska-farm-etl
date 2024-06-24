@@ -37,12 +37,13 @@ def main(ev_data: KafkaPopulasi, populasi_usecase: FactPopulasiUsecase):
     
     try:
         # Create/Update DWH
-        fact_populasi = populasi_usecase.get_or_create(
+        fact_populasi_hash = populasi_usecase.get_or_create(
             tgl_pencatatan = ev_data.data.tgl_pencatatan,
             id_peternak = ev_data.data.id_peternak,
         )
-        fact_populasi = populasi_usecase.transform(ev_data.data, fact_populasi)
-        populasi_usecase.load(fact_populasi)
+        for fact_populasi in fact_populasi_hash.values():
+            fact_populasi = populasi_usecase.transform_jumlah(ev_data.data, fact_populasi)
+            populasi_usecase.load(fact_populasi)
         
         logger.info("Processed - Status: OK")
     except Exception as err:
