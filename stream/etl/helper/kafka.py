@@ -1,6 +1,8 @@
 import json
 from logging import Logger
-from typing import Callable
+from typing import Callable, Type
+from pydantic import BaseModel
+from pydantic_core import ValidationError
 
 from kafka import KafkaConsumer
 
@@ -21,7 +23,7 @@ class KafkaHelper:
     
 
     # Methods
-    def run(self, process: Callable, **kwargs):
+    def run(self, process: Callable, Validator: Type[BaseModel], **kwargs):
         try:
             consumer = KafkaConsumer(
                 self.__topic,
@@ -31,9 +33,13 @@ class KafkaHelper:
             self.__logger.info(f"Starting - {self.__label}. URI: '{self.__uri}' with TOPIC: '{self.__topic}'")
 
             for msg in consumer:
-                if(msg.value):
-                    self.__logger.info("Receive")
-                    process(msg.value, **kwargs)
+                try:
+                    if (msg.value):
+                        ev_data = Validator(**msg.value)
+                        process(ev_data, **kwargs)
+                except ValidationError as err:
+                    self.__logger.error(err)
+
         except KeyboardInterrupt:
             self.__logger.info(f"Closing - {self.__label}")
     

@@ -1,9 +1,8 @@
-from logging import Logger
+from datetime import date
 
 from etl.seq_fact_distribusi.modules.entity import (
+    Distribusi,
     FactDistribusi,
-    FactDistribusiID,
-    KafkaDistribusi,
 )
 from etl.seq_fact_distribusi.modules.repository import (
     FactDistribusiDWHRepository,
@@ -12,30 +11,32 @@ from etl.seq_fact_distribusi.modules.repository import (
 
 class FactDistribusiUsecase:
     __dwh_repo: FactDistribusiDWHRepository
-    __logger: Logger
 
-    def __init__(self, repo: FactDistribusiDWHRepository, logger: Logger):
-        self.__dwh_repo = repo
-        self.__logger = logger
+    def __init__(self, dwh_repo: FactDistribusiDWHRepository):
+        self.__dwh_repo = dwh_repo
     
 
     # Methods
-    def load(self, kafka_distribusi: KafkaDistribusi, id_list: FactDistribusiID):
-        exists_data = self.__dwh_repo.get(id_list)
-        data = kafka_distribusi.data
-        
-        distribusi = FactDistribusi(
-            id_waktu = id_list.id_waktu,
-            id_lokasi = id_list.id_lokasi,
-            id_unit_peternakan = id_list.id_unit_peternakan,
-            id_mitra_bisnis = id_list.id_mitra_bisnis,
-            id_jenis_produk = id_list.id_jenis_produk,
-            jumlah_distribusi = (exists_data.jumlah_distribusi + data.jumlah) if (exists_data) else data.jumlah,
-            harga_minimum = min(exists_data.harga_minimum, data.harga_berlaku) if (exists_data) else data.harga_berlaku,
-            harga_maximum = max(exists_data.harga_maximum, data.harga_berlaku) if (exists_data) else data.harga_berlaku,
-            harga_rata_rata = (exists_data.jumlah_penjualan + (data.jumlah * data.harga_berlaku)) / (exists_data.jumlah_distribusi + data.jumlah) if (exists_data) else data.harga_berlaku,
-            jumlah_penjualan = exists_data.jumlah_penjualan + (data.jumlah * data.harga_berlaku) if (exists_data) else (data.jumlah * data.harga_berlaku),
-        )
-        
-        self.__logger.info(f"Loading data to 'Fact Distribusi'")
-        self.__dwh_repo.load(distribusi)
+    def get_or_create(
+        self,
+        tgl_distribusi: date,
+        id_unit_ternak: int,
+        id_jenis_produk: int,
+        id_mitra_bisnis: int,
+    ) -> FactDistribusi:
+        fact_distribusi_id = self.__dwh_repo.convert_id(tgl_distribusi, id_unit_ternak, id_jenis_produk, id_mitra_bisnis)
+        fact_distribusi = self.__dwh_repo.get_or_create(fact_distribusi_id)
+        return fact_distribusi
+    
+
+    def transform(self, new_distribusi: Distribusi, fact_distribusi: FactDistribusi) -> FactDistribusi:
+        fact_distribusi.jumlah_distribusi = fact_distribusi.jumlah_distribusi + new_distribusi.jumlah
+        fact_distribusi.harga_minimum = min(fact_distribusi.harga_minimum, new_distribusi.harga_berlaku) if (fact_distribusi.harga_minimum != -1) else new_distribusi.harga_berlaku
+        fact_distribusi.harga_maximum = max(fact_distribusi.harga_maximum, new_distribusi.harga_berlaku) if (fact_distribusi.harga_maximum != -1) else new_distribusi.harga_berlaku
+        fact_distribusi.harga_rata_rata = (fact_distribusi.jumlah_penjualan + (new_distribusi.jumlah * new_distribusi.harga_berlaku)) / (fact_distribusi.jumlah_distribusi + new_distribusi.jumlah) if (fact_distribusi.harga_rata_rata != -1) else new_distribusi.harga_berlaku
+        fact_distribusi.jumlah_penjualan = fact_distribusi.jumlah_penjualan + (new_distribusi.jumlah * new_distribusi.harga_berlaku)
+        return fact_distribusi
+
+
+    def load(self, fact_distribusi: FactDistribusi):
+        self.__dwh_repo.load(fact_distribusi)
