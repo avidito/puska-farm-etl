@@ -6,14 +6,17 @@ from etl.seq_fact_distribusi.modules.entity import (
 )
 from etl.seq_fact_distribusi.modules.repository import (
     FactDistribusiDWHRepository,
+    FactDistribusiWebSocketRepository,
 )
 
 
 class FactDistribusiUsecase:
     __dwh_repo: FactDistribusiDWHRepository
+    __ws_repo: FactDistribusiWebSocketRepository
 
-    def __init__(self, dwh_repo: FactDistribusiDWHRepository):
+    def __init__(self, dwh_repo: FactDistribusiDWHRepository, ws_repo: FactDistribusiWebSocketRepository):
         self.__dwh_repo = dwh_repo
+        self.__ws_repo = ws_repo
     
 
     # Methods
@@ -40,3 +43,7 @@ class FactDistribusiUsecase:
 
     def load(self, fact_distribusi: FactDistribusi):
         self.__dwh_repo.load(fact_distribusi)
+    
+    def push_websocket(self):
+        self.__ws_repo.push_susu()
+        self.__ws_repo.push_ternak()

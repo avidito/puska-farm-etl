@@ -1,11 +1,15 @@
 import os
+import json
 from datetime import date
 from logging import Logger
-from typing import List, Literal, Optional
+from typing import List
 
-from etl.helper.api import MLHelper
 from etl.helper.db import DWHHelper
+from etl.helper.api.ml_api import MLAPIHelper
 from etl.helper.id_getter import IDGetterHelper
+from etl.helper.websocket import WebSocketHelper
+
+from etl.helper.api.schemas import MLTriggerProduksi
 
 from etl.seq_fact_produksi.modules.entity import (
     FactProduksi,
@@ -76,13 +80,39 @@ class FactProduksiDWHRepository:
 
 
 class FactProduksiMLRepository:
-    __ml: MLHelper
+    __ml_api: MLAPIHelper
     __logger: Logger
 
-    def __init__(self, ml: MLHelper, logger: Logger):
-        self.__ml = ml
+    def __init__(self, ml_api: MLAPIHelper, logger: Logger):
+        self.__ml_api = ml_api
         self.__logger = logger
     
-    def trigger_ml_susu(self, id_waktu: int, id_lokasi: int, id_unit_peternakan: int, time_type: Literal["daily", "weekly"] = "daily"):
-        self.__logger.debug("Trigger ML Susu")
-        self.__ml.trigger_ml_susu(time_type, id_waktu, id_lokasi, id_unit_peternakan)
+    def predict_susu(self, trigger: MLTriggerProduksi):
+        self.__logger.debug("Predict Produksi Susu")
+        
+        error = self.__ml_api.predict_susu(trigger)
+        if error:
+            self.__logger.error(f"Failed to trigger ML: {error}")
+
+
+class FactProduksiWebSocketRepository:
+    __ws: WebSocketHelper
+    __logger: Logger
+
+    def __init__(self, ws: WebSocketHelper, logger: Logger):
+        self.__ws = ws
+        self.__logger = logger
+    
+    def push_susu(self):
+        self.__logger.debug("Push to WebSocket: etl-susu")
+        payload = {
+            "type": "etl-susu",
+        }
+        self.__ws.push(json.dumps(payload))
+
+    def push_ternak(self):
+        self.__logger.debug("Push to WebSocket: etl-ternak")
+        payload = {
+            "type": "etl-ternak",
+        }
+        self.__ws.push(json.dumps(payload))

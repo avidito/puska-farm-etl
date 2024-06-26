@@ -2,17 +2,19 @@ from etl.helper import (
     db,
     log,
     kafka,
+    websocket,
 )
 
 from etl.seq_fact_distribusi.modules.entity import KafkaDistribusi
 from etl.seq_fact_distribusi.modules.repository import (
     FactDistribusiDWHRepository,
+    FactDistribusiWebSocketRepository,
 )
 from etl.seq_fact_distribusi.modules.usecase import FactDistribusiUsecase
 
 
 # Main Sequence
-def main(ev_data: KafkaDistribusi, distribusi_usecase: FactDistribusiUsecase):
+def main(ev_data: KafkaDistribusi, distribusi_usecase: FactDistribusiUsecase, stream_logger: log.LogStreamHelper):
     """
     Fact Distribusi - Streaming ETL
 
@@ -30,7 +32,9 @@ def main(ev_data: KafkaDistribusi, distribusi_usecase: FactDistribusiUsecase):
         }
     }
     """
-    
+    # Start Logger
+    stream_logger.start_log("fact_distribusi", ev_data.source_table, ev_data.action, ev_data.data)
+
     try:
         # Create/Update DWH
         fact_distribusi = distribusi_usecase.get_or_create(
@@ -41,11 +45,17 @@ def main(ev_data: KafkaDistribusi, distribusi_usecase: FactDistribusiUsecase):
         )
         fact_distribusi = distribusi_usecase.transform(ev_data.data, fact_distribusi)
         distribusi_usecase.load(fact_distribusi)
+
+        # Push WebSocket
+        distribusi_usecase.push_websocket()
         
         logger.info("Processed - Status: OK")
     except Exception as err:
         logger.error(str(err))
         logger.info("Processed - Status: FAILED")
+    
+    # End Logger
+    stream_logger.end_log()
 
 
 # Runtime
@@ -54,9 +64,13 @@ if __name__ == "__main__":
 
     dwh = db.DWHHelper()
     dwh_repo = FactDistribusiDWHRepository(dwh, logger)
+
+    ws = websocket.WebSocketHelper()
+    ws_repo = FactDistribusiWebSocketRepository(ws, logger)
     
-    distribusi_usecase = FactDistribusiUsecase(dwh_repo)
+    distribusi_usecase = FactDistribusiUsecase(dwh_repo, ws_repo)
 
     # Setup Runtime
     kafka_h = kafka.KafkaHelper("seq_fact_distribusi", logger)
-    kafka_h.run(main, Validator=KafkaDistribusi, distribusi_usecase=distribusi_usecase)
+    stream_logger = log.LogStreamHelper(dwh)
+    kafka_h.run(main, Validator=KafkaDistribusi, distribusi_usecase = distribusi_usecase, stream_logger = stream_logger)
