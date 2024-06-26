@@ -43,7 +43,7 @@ def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase):
         produksi_usecase.load(fact_produksi)
 
         # Trigger ML API
-        produksi_usecase.trigger_ml(
+        produksi_usecase.predict_susu(
             id_waktu = fact_produksi.id_waktu,
             id_lokasi = fact_produksi.id_lokasi,
             id_unit_peternakan = fact_produksi.id_unit_peternakan,
@@ -62,8 +62,8 @@ if __name__ == "__main__":
     dwh = db.DWHHelper()
     dwh_repo = FactProduksiDWHRepository(dwh, logger)
     
-    ml = api.MLHelper()
-    ml_repo = FactProduksiMLRepository(ml, logger)
+    ml_api = api.MLAPIHelper()
+    ml_repo = FactProduksiMLRepository(ml_api, logger)
     
     produksi_usecase = FactProduksiUsecase(dwh_repo, ml_repo)
 

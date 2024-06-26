@@ -1,5 +1,7 @@
 from datetime import date
 
+from etl.helper.api.schemas import MLTriggerProduksi
+
 from etl.seq_fact_produksi.modules.entity import (
     Produksi,
     FactProduksi,
@@ -41,5 +43,10 @@ class FactProduksiUsecase:
         self.__dwh_repo.load(fact_produksi)
 
 
-    def trigger_ml(self, id_waktu: int, id_lokasi: int, id_unit_peternakan: int):
-        self.__ml_repo.trigger_ml_susu(id_waktu, id_lokasi, id_unit_peternakan)
+    def predict_susu(self, id_waktu: int, id_lokasi: int, id_unit_peternakan: int):
+        trigger = MLTriggerProduksi(
+            id_waktu = id_waktu,
+            id_lokasi = id_lokasi,
+            id_unit_peternakan = id_unit_peternakan,
+        )
+        self.__ml_repo.predict_susu(trigger)
