@@ -16,7 +16,7 @@ from etl.seq_fact_produksi.modules.usecase import FactProduksiUsecase
 
 
 # Main Sequence
-def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase):
+def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase, stream_logger: log.LogStreamHelper):
     """
     Fact Produksi - Streaming ETL
 
@@ -33,6 +33,8 @@ def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase):
         }
     }
     """
+    # Start Logger
+    stream_logger.start_log("fact_produksi", ev_data.source_table, ev_data.action, ev_data.data)
     
     try:
         # Create/Update DWH
@@ -55,10 +57,14 @@ def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase):
         # Push WebSocket
         produksi_usecase.push_websocket()
 
+
         logger.info("Processed - Status: OK")
     except Exception as err:
         logger.error(str(err))
         logger.info("Processed - Status: FAILED")
+    
+    # End Logger
+    stream_logger.end_log()
 
 
 # Runtime
@@ -78,4 +84,5 @@ if __name__ == "__main__":
 
     # Setup Runtime
     kafka_h = kafka.KafkaHelper("seq_fact_produksi", logger)
-    kafka_h.run(main, Validator=KafkaProduksi, produksi_usecase=produksi_usecase)
+    stream_logger = log.LogStreamHelper(dwh)
+    kafka_h.run(main, Validator=KafkaProduksi, produksi_usecase = produksi_usecase, stream_logger=stream_logger)

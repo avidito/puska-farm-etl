@@ -14,7 +14,7 @@ from etl.seq_fact_populasi.modules.usecase import FactPopulasiUsecase
 
 
 # Main Sequence
-def main(ev_data: KafkaPopulasi, populasi_usecase: FactPopulasiUsecase):
+def main(ev_data: KafkaPopulasi, populasi_usecase: FactPopulasiUsecase, stream_logger: log.LogStreamHelper):
     """
     Fact Populasi - Streaming ETL
 
@@ -36,6 +36,8 @@ def main(ev_data: KafkaPopulasi, populasi_usecase: FactPopulasiUsecase):
         }
     }
     """
+    # Start Logger
+    stream_logger.start_log("fact_populasi", ev_data.source_table, ev_data.action, ev_data.data)
     
     try:
         # Create/Update DWH
@@ -54,6 +56,9 @@ def main(ev_data: KafkaPopulasi, populasi_usecase: FactPopulasiUsecase):
     except Exception as err:
         logger.error(str(err))
         logger.info("Processed - Status: FAILED")
+    
+    # End Logger
+    stream_logger.end_log()
 
 
 # Runtime
@@ -70,4 +75,5 @@ if __name__ == "__main__":
 
     # Setup Runtime
     kafka_h = kafka.KafkaHelper("seq_fact_populasi", logger)
-    kafka_h.run(main, Validator=KafkaPopulasi, populasi_usecase = populasi_usecase)
+    stream_logger = log.LogStreamHelper(dwh)
+    kafka_h.run(main, Validator=KafkaPopulasi, populasi_usecase = populasi_usecase, stream_logger = stream_logger)

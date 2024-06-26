@@ -14,7 +14,7 @@ from etl.seq_fact_distribusi.modules.usecase import FactDistribusiUsecase
 
 
 # Main Sequence
-def main(ev_data: KafkaDistribusi, distribusi_usecase: FactDistribusiUsecase):
+def main(ev_data: KafkaDistribusi, distribusi_usecase: FactDistribusiUsecase, stream_logger: log.LogStreamHelper):
     """
     Fact Distribusi - Streaming ETL
 
@@ -32,7 +32,9 @@ def main(ev_data: KafkaDistribusi, distribusi_usecase: FactDistribusiUsecase):
         }
     }
     """
-    
+    # Start Logger
+    stream_logger.start_log("fact_distribusi", ev_data.source_table, ev_data.action, ev_data.data)
+
     try:
         # Create/Update DWH
         fact_distribusi = distribusi_usecase.get_or_create(
@@ -51,6 +53,9 @@ def main(ev_data: KafkaDistribusi, distribusi_usecase: FactDistribusiUsecase):
     except Exception as err:
         logger.error(str(err))
         logger.info("Processed - Status: FAILED")
+    
+    # End Logger
+    stream_logger.end_log()
 
 
 # Runtime
@@ -67,4 +72,5 @@ if __name__ == "__main__":
 
     # Setup Runtime
     kafka_h = kafka.KafkaHelper("seq_fact_distribusi", logger)
-    kafka_h.run(main, Validator=KafkaDistribusi, distribusi_usecase=distribusi_usecase)
+    stream_logger = log.LogStreamHelper(dwh)
+    kafka_h.run(main, Validator=KafkaDistribusi, distribusi_usecase = distribusi_usecase, stream_logger = stream_logger)
