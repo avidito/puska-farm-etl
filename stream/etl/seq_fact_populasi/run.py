@@ -2,11 +2,13 @@ from etl.helper import (
     db,
     log,
     kafka,
+    websocket,
 )
 
 from etl.seq_fact_populasi.modules.entity import KafkaPopulasi
 from etl.seq_fact_populasi.modules.repository import (
     FactPopulasiDWHRepository,
+    FactPopulasiWebSocketRepository,
 )
 from etl.seq_fact_populasi.modules.usecase import FactPopulasiUsecase
 
@@ -45,6 +47,9 @@ def main(ev_data: KafkaPopulasi, populasi_usecase: FactPopulasiUsecase):
             fact_populasi = populasi_usecase.transform_jumlah(ev_data.data, fact_populasi)
             populasi_usecase.load(fact_populasi)
         
+        # Push WebSocket
+        populasi_usecase.push_websocket()
+        
         logger.info("Processed - Status: OK")
     except Exception as err:
         logger.error(str(err))
@@ -57,8 +62,11 @@ if __name__ == "__main__":
 
     dwh = db.DWHHelper()
     dwh_repo = FactPopulasiDWHRepository(dwh, logger)
+
+    ws = websocket.WebSocketHelper()
+    ws_repo = FactPopulasiWebSocketRepository(ws, logger)
     
-    populasi_usecase = FactPopulasiUsecase(dwh_repo)
+    populasi_usecase = FactPopulasiUsecase(dwh_repo, ws_repo)
 
     # Setup Runtime
     kafka_h = kafka.KafkaHelper("seq_fact_populasi", logger)

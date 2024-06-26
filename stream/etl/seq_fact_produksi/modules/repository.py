@@ -1,12 +1,13 @@
 import os
+import json
 from datetime import date
 from logging import Logger
 from typing import List
-import requests
 
 from etl.helper.db import DWHHelper
 from etl.helper.api.ml_api import MLAPIHelper
 from etl.helper.id_getter import IDGetterHelper
+from etl.helper.websocket import WebSocketHelper
 
 from etl.helper.api.schemas import MLTriggerProduksi
 
@@ -92,3 +93,26 @@ class FactProduksiMLRepository:
         error = self.__ml_api.predict_susu(trigger)
         if error:
             self.__logger.error(f"Failed to trigger ML: {error}")
+
+
+class FactProduksiWebSocketRepository:
+    __ws: WebSocketHelper
+    __logger: Logger
+
+    def __init__(self, ws: WebSocketHelper, logger: Logger):
+        self.__ws = ws
+        self.__logger = logger
+    
+    def push_susu(self):
+        self.__logger.debug("Push to WebSocket: etl-susu")
+        payload = {
+            "type": "etl-susu",
+        }
+        self.__ws.push(json.dumps(payload))
+
+    def push_ternak(self):
+        self.__logger.debug("Push to WebSocket: etl-ternak")
+        payload = {
+            "type": "etl-ternak",
+        }
+        self.__ws.push(json.dumps(payload))

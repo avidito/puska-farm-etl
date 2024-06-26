@@ -4,15 +4,16 @@ from datetime import date
 from etl.seq_fact_populasi.modules.entity import (
     HistoryPopulasi,
     FactPopulasi,
-    FactPopulasiID,
 )
 from etl.seq_fact_populasi.modules.repository import (
     FactPopulasiDWHRepository,
+    FactPopulasiWebSocketRepository,
 )
 
 
 class FactPopulasiUsecase:
     __dwh_repo: FactPopulasiDWHRepository
+    __ws_repo: FactPopulasiWebSocketRepository
 
     TIPE_TERNAK = [
         "Pedaging",
@@ -29,8 +30,9 @@ class FactPopulasiUsecase:
         "Dewasa",
     ]
 
-    def __init__(self, dwh_repo: FactPopulasiDWHRepository):
+    def __init__(self, dwh_repo: FactPopulasiDWHRepository, ws_repo: FactPopulasiWebSocketRepository):
         self.__dwh_repo = dwh_repo
+        self.__ws_repo = ws_repo
     
 
     # Methods
@@ -91,3 +93,6 @@ class FactPopulasiUsecase:
 
     def load(self, fact_populasi: FactPopulasi):
         self.__dwh_repo.load(fact_populasi)
+
+    def push_websocket(self):
+        self.__ws_repo.push_ternak()

@@ -8,17 +8,25 @@ from etl.seq_fact_produksi.modules.entity import (
 )
 from etl.seq_fact_produksi.modules.repository import (
     FactProduksiDWHRepository,
-    FactProduksiMLRepository
+    FactProduksiMLRepository,
+    FactProduksiWebSocketRepository,
 )
 
 
 class FactProduksiUsecase:
     __dwh_repo: FactProduksiDWHRepository
     __ml_repo: FactProduksiMLRepository
+    __ws_repo: FactProduksiWebSocketRepository
 
-    def __init__(self, dwh_repo: FactProduksiDWHRepository, ml_repo: FactProduksiMLRepository):
+    def __init__(
+        self,
+        dwh_repo: FactProduksiDWHRepository,
+        ml_repo: FactProduksiMLRepository,
+        ws_repo: FactProduksiWebSocketRepository,
+    ):
         self.__dwh_repo = dwh_repo
         self.__ml_repo = ml_repo
+        self.__ws_repo = ws_repo
     
 
     # Methods
@@ -50,3 +58,7 @@ class FactProduksiUsecase:
             id_unit_peternakan = id_unit_peternakan,
         )
         self.__ml_repo.predict_susu(trigger)
+    
+    def push_websocket(self):
+        self.__ws_repo.push_susu()
+        self.__ws_repo.push_ternak()

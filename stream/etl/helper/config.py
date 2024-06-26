@@ -15,6 +15,8 @@ class EnvConfig(BaseSettings):
     KAFKA_TOPIC: str = Field(alias="KAFKA_TOPIC")
     API_ML_HOST: str = Field(alias="API_ML_HOST")
     API_ML_PORT: str = Field(alias="API_ML_PORT")
+    WS_HOST: str = Field(alias="WS_HOST")
+    WS_PORT: str = Field(alias="WS_PORT")
 
 
 # Implementation

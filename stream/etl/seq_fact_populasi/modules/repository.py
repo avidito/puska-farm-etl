@@ -1,10 +1,12 @@
 import os
+import json
 from datetime import date
 from logging import Logger
-from typing import List, Optional
+from typing import List
 
 from etl.helper.db import DWHHelper
 from etl.helper.id_getter import IDGetterHelper
+from etl.helper.websocket import WebSocketHelper
 
 from etl.seq_fact_populasi.modules.entity import (
     FactPopulasi,
@@ -74,3 +76,19 @@ class FactPopulasiDWHRepository:
             pk = self.PK,
             update_insert = True
         )
+
+
+class FactPopulasiWebSocketRepository:
+    __ws: WebSocketHelper
+    __logger: Logger
+
+    def __init__(self, ws: WebSocketHelper, logger: Logger):
+        self.__ws = ws
+        self.__logger = logger
+    
+    def push_ternak(self):
+        self.__logger.debug("Push to WebSocket: etl-ternak")
+        payload = {
+            "type": "etl-ternak"
+        }
+        self.__ws.push(json.dumps(payload))
