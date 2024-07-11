@@ -131,6 +131,7 @@ class FactPopulasiUsecase:
         
         fact_populasi.jumlah_lahir = new_lahir
         fact_populasi.jumlah_mati = new_mati
+        return fact_populasi
     
     def transform_masuk(self, new_masuk: PencatatanTernakMasuk, fact_populasi: FactPopulasi) -> FactPopulasi:
         tipe_ternak = fact_populasi.tipe_ternak
@@ -161,6 +162,7 @@ class FactPopulasiUsecase:
                     new_masuk = new_masuk.jml_perah_betina
         
         fact_populasi.jumlah_masuk = new_masuk
+        return fact_populasi
     
     def transform_keluar(self, new_keluar: PencatatanTernakKeluar, fact_populasi: FactPopulasi) -> FactPopulasi:
         tipe_ternak = fact_populasi.tipe_ternak
@@ -191,6 +193,7 @@ class FactPopulasiUsecase:
                     new_keluar = new_keluar.jml_perah_betina
         
         fact_populasi.jumlah_keluar = new_keluar
+        return fact_populasi
 
 
     def load(self, fact_populasi: FactPopulasi):

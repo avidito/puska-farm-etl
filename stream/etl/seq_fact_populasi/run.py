@@ -1,3 +1,5 @@
+import traceback
+
 from etl.helper import (
     db,
     log,
@@ -61,8 +63,8 @@ def main(ev_data: KafkaPopulasi, populasi_usecase: FactPopulasiUsecase, stream_l
         populasi_usecase.push_websocket()
         
         logger.info("Processed - Status: OK")
-    except Exception as err:
-        logger.error(str(err))
+    except Exception:
+        logger.error(traceback.format_exc())
         logger.info("Processed - Status: FAILED")
     
     # End Logger

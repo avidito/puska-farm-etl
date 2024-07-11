@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, Union
 from datetime import date
 
 
@@ -84,4 +84,9 @@ class PencatatanTernakMasuk(BaseModel):
 class KafkaPopulasi(BaseModel):
     source_table: str
     action: str
-    data: HistoryPopulasi
+    data: Union[
+        HistoryPopulasi,
+        HistoryKelahiranKematian,
+        PencatatanTernakKeluar,
+        PencatatanTernakMasuk
+    ]
