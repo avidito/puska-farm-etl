@@ -1,3 +1,5 @@
+import traceback
+
 from etl.helper import (
     db,
     log,
@@ -41,20 +43,28 @@ def main(ev_data: KafkaPopulasi, populasi_usecase: FactPopulasiUsecase, stream_l
     
     try:
         # Create/Update DWH
-        fact_populasi_hash = populasi_usecase.get_or_create(
+        fact_populasi_map = populasi_usecase.get_or_create(
             tgl_pencatatan = ev_data.data.tgl_pencatatan,
             id_peternak = ev_data.data.id_peternak,
         )
-        for fact_populasi in fact_populasi_hash.values():
-            fact_populasi = populasi_usecase.transform_jumlah(ev_data.data, fact_populasi)
+        for fact_populasi in fact_populasi_map.values():
+            if ev_data.source_table == "history_populasi":
+                fact_populasi = populasi_usecase.transform_jumlah(ev_data.data, fact_populasi)
+            elif ev_data.source_table == "history_kelahiran_kematian":
+                fact_populasi = populasi_usecase.transform_kelahiran_kematian(ev_data.data, fact_populasi)
+            elif ev_data.source_table == "pencatatan_ternak_masuk":
+                fact_populasi = populasi_usecase.transform_masuk(ev_data.data, fact_populasi)
+            elif ev_data.source_table == "pencatatan_ternak_keluar":
+                fact_populasi = populasi_usecase.transform_keluar(ev_data.data, fact_populasi)
+
             populasi_usecase.load(fact_populasi)
         
         # Push WebSocket
         populasi_usecase.push_websocket()
         
         logger.info("Processed - Status: OK")
-    except Exception as err:
-        logger.error(str(err))
+    except Exception:
+        logger.error(traceback.format_exc())
         logger.info("Processed - Status: FAILED")
     
     # End Logger

@@ -51,7 +51,7 @@ class FactPopulasiDWHRepository:
         return fact_populasi_id
 
     def get_or_create(self, fact_populasi_id: FactPopulasiID) -> FactPopulasi:
-        self.__logger.debug("Get data from 'Fact Poppulasi'")
+        self.__logger.debug("Get data from 'Fact Populasi'")
         results = self.__dwh.run(self.__query_dir, "get_fact_populasi.sql", fact_populasi_id.model_dump())
 
         if results:
