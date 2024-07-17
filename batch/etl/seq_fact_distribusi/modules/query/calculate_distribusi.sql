@@ -14,7 +14,7 @@ cte_distribusi_susu AS (
     MAX(s.harga_berlaku) AS harga_maximum,
     ROUND(AVG(s.harga_berlaku), 3) AS harga_rata_rata,
     ROUND(SUM(s.jumlah * s.harga_berlaku), 3) AS jumlah_penjualan
-  FROM distribusi_susu AS s
+  FROM distribusi_susu_cdc AS s
   JOIN cte_filter AS fltr
     ON s.tgl_distribusi BETWEEN fltr.start_date AND fltr.end_date
   GROUP BY 1, 2, 3, 4
@@ -30,7 +30,7 @@ cte_distribusi_ternak AS (
     MAX(t.harga_berlaku) AS harga_maximum,
     ROUND(AVG(t.harga_berlaku), 3) AS harga_rata_rata,
     ROUND(SUM(t.jumlah * t.harga_berlaku), 3) AS jumlah_penjualan
-  FROM distribusi_ternak AS t
+  FROM distribusi_ternak_cdc AS t
   JOIN cte_filter AS fltr
     ON t.tgl_distribusi BETWEEN fltr.start_date AND fltr.end_date
   GROUP BY 1, 2, 3, 4

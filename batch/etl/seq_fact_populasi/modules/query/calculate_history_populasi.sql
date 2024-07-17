@@ -15,7 +15,7 @@ cte_history_kelahiran_kematian AS (
     NULL::INT8 AS jumlah_masuk,
     NULL::INT8 AS jumlah_keluar,
     NULL::INT8 AS jumlah
-  FROM history_kelahiran_kematian AS hkk
+  FROM history_kelahiran_kematian_cdc AS hkk
   JOIN cte_filter AS fltr
     ON hkk.tgl_pencatatan BETWEEN fltr.start_date AND fltr.end_date
   CROSS JOIN LATERAL (
@@ -43,7 +43,7 @@ cte_pencatatan_ternak_masuk AS (
     SUM(jml.jumlah_masuk) AS jumlah_masuk,
     NULL::INT8 AS jumlah_keluar,
     NULL::INT8 AS jumlah
-  FROM pencatatan_ternak_masuk AS ptm
+  FROM pencatatan_ternak_masuk_cdc AS ptm
   JOIN cte_filter AS fltr
     ON ptm.tgl_pencatatan BETWEEN fltr.start_date AND fltr.end_date
   CROSS JOIN LATERAL (
@@ -71,7 +71,7 @@ cte_pencatatan_ternak_keluar AS (
     NULL::INT8 AS jumlah_masuk,
     SUM(jml.jumlah_keluar) AS jumlah_keluar,
     NULL::INT8 AS jumlah
-  FROM pencatatan_ternak_keluar AS ptk
+  FROM pencatatan_ternak_keluar_cdc AS ptk
   JOIN cte_filter AS fltr
     ON ptk.tgl_pencatatan BETWEEN fltr.start_date AND fltr.end_date
   CROSS JOIN LATERAL (
@@ -99,7 +99,7 @@ cte_history_populasi AS (
     NULL::INT8 AS jumlah_masuk,
     NULL::INT8 AS jumlah_keluar,
     SUM(jml.jumlah) AS jumlah
-  FROM history_populasi AS hp
+  FROM history_populasi_cdc AS hp
   JOIN cte_filter AS fltr
     ON hp.tgl_pencatatan BETWEEN fltr.start_date AND fltr.end_date
   CROSS JOIN LATERAL (
