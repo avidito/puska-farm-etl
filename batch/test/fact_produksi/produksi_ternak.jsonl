@@ -1,0 +1,3 @@
+{"source_table": "produksi_ternak", "action": "INSERT", "old_data": null, "new_data": {"tgl_produksi": "2024-03-29", "id_unit_ternak": 2, "id_jenis_produk": 1, "sumber_pasokan": "Pengepul", "jumlah": 2}}
+{"source_table": "produksi_ternak", "action": "UPDATE", "old_data": {"tgl_produksi": "2024-03-29", "id_unit_ternak": 2, "id_jenis_produk": 1, "sumber_pasokan": "Pengepul", "jumlah": 2}, "new_data": {"tgl_produksi": "2024-03-29", "id_unit_ternak": 2, "id_jenis_produk": 1, "sumber_pasokan": "Pengepul", "jumlah": 10}}
+{"source_table": "produksi_ternak", "action": "DELETE", "old_data": {"tgl_produksi": "2024-03-29", "id_unit_ternak": 2, "id_jenis_produk": 1, "sumber_pasokan": "Pengepul", "jumlah": 10}, "new_data": null}

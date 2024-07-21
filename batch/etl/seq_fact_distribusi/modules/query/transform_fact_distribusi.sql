@@ -1,9 +1,4 @@
-WITH cte_filter AS (
-  SELECT
-    DATE(:start_date) AS start_date,
-    DATE(:end_date) AS end_date
-),
-cte_distribusi_susu AS (
+WITH cte_distribusi_susu AS (
   SELECT
     s.tgl_distribusi,
     s.id_unit_ternak AS id_unit_peternakan,
@@ -15,8 +10,6 @@ cte_distribusi_susu AS (
     ROUND(AVG(s.harga_berlaku), 3) AS harga_rata_rata,
     ROUND(SUM(s.jumlah * s.harga_berlaku), 3) AS jumlah_penjualan
   FROM distribusi_susu_cdc AS s
-  JOIN cte_filter AS fltr
-    ON s.tgl_distribusi BETWEEN fltr.start_date AND fltr.end_date
   GROUP BY 1, 2, 3, 4
 ),
 cte_distribusi_ternak AS (
@@ -31,8 +24,6 @@ cte_distribusi_ternak AS (
     ROUND(AVG(t.harga_berlaku), 3) AS harga_rata_rata,
     ROUND(SUM(t.jumlah * t.harga_berlaku), 3) AS jumlah_penjualan
   FROM distribusi_ternak_cdc AS t
-  JOIN cte_filter AS fltr
-    ON t.tgl_distribusi BETWEEN fltr.start_date AND fltr.end_date
   GROUP BY 1, 2, 3, 4
 ),
 cte_summary AS (

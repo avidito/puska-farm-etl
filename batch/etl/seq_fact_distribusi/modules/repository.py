@@ -1,68 +1,84 @@
 import os
-from logging import Logger
 from typing import List
+from sqlalchemy import Connection
 
-from etl.helper.db import OpsHelper, DWHHelper
+from etl.helper.db import PostgreSQLHelper
+from etl.helper.log import LogBatch
+
 from etl.seq_fact_distribusi.modules.entity import (
-    FactDistribusi,
     FactDistribusiCalc,
-    ParamsFactDistribusi,
 )
 
 
 class FactDistribusiDWHRepository:
-    __dwh: DWHHelper
-    __logger: Logger
+    __dwh: PostgreSQLHelper
+    __etl_query_dir: str
 
-    PK: List[str] = [
-        "id_waktu",
-        "id_lokasi",
-        "id_unit_peternakan",
-        "id_mitra_bisnis",
-        "id_jenis_produk",
-    ]
-
-    def __init__(self, dwh: DWHHelper, logger: Logger):
+    def __init__(self, dwh: PostgreSQLHelper):
         self.__dwh = dwh
-        self.__logger = logger
+        self.__etl_query_dir = os.path.join(os.path.dirname(__file__), "query")
 
 
-    # Methods
-    def load(self, distribusi: List[FactDistribusi]) -> int:
-        self.__logger.debug("Load data to 'Fact Distribusi'")
-        processed_row = self.__dwh.load(
-            "fact_distribusi",
-            data = distribusi,
-            pk = self.PK,
-            update_insert = True
+    # Public
+    def load_log(self, log: LogBatch):
+        self.__dwh.load(
+            table_name = "log_batch",
+            data = [log],
         )
-        return processed_row
-    
-
-class FactDistribusiOpsRepository:
-    __ops: OpsHelper
-    __logger: Logger
-
-    def __init__(self, ops: OpsHelper, logger: Logger):
-        self.__ops = ops
-        self.__logger = logger
-
-        self.__query_dir = os.path.join(os.path.dirname(__file__), "query")
 
 
-    # Methods
-    def get(self, params: ParamsFactDistribusi) -> List[FactDistribusi]:
-        prc_params = {
-            "start_date": params.start_date,
-            "end_date": params.end_date,
-        }
-        fact_distribusi_calc = self.__calc_distribusi(prc_params)
-        return fact_distribusi_calc
+    def update_dwh(self, calc: List[FactDistribusiCalc]) -> float:
+        db = self.__dwh.get_db()
+        with db.connect() as conn:
+            processed_rows = self.__create_tmp_table(conn, calc)
+            self.__update_dwh(conn)
+
+            conn.commit()
+        return processed_rows
 
 
     # Private
-    def __calc_distribusi(self, prc_params: dict, query: str = "calculate_distribusi.sql") -> List[FactDistribusi]:
-        self.__logger.debug(f"Run query '{query}'")
-        results = self.__ops.run(self.__query_dir, query, prc_params)
-        fact_distribusi_calc = [FactDistribusiCalc(**row) for row in results]
+    def __create_tmp_table(self, conn: Connection, calc: List[FactDistribusiCalc]) -> int:
+        self.__dwh.run_query_session(conn, self.__etl_query_dir, "create_tmp_fact_distribusi")
+        processed_rows = self.__dwh.load_session(
+            conn,
+            table_name = "tmp_fact_distribusi",
+            data = calc,
+        )
+        return processed_rows
+
+
+    def __update_dwh(self, conn: Connection):
+        self.__dwh.run_query_session(conn, self.__etl_query_dir, "update_fact_distribusi")
+
+
+class FactDistribusiOpsRepository:
+    __ops: PostgreSQLHelper
+    __etl_query_dir: str
+
+    def __init__(self, ops: PostgreSQLHelper):
+        self.__ops = ops
+        self.__etl_query_dir = os.path.join(os.path.dirname(__file__), "query")
+
+
+    # Public - CDC
+    def copy_cdc(self, table: str):
+        self.__ops.copy_cdc(table)
+
+
+    def remove_cdc(self, table: str):
+        self.__ops.remove_cdc(table)
+
+
+    def flag_cdc(self, table: str):
+        self.__ops.flag_cdc(table)
+
+
+    # Public
+    def transform(self) -> FactDistribusiCalc:
+        fact_distribusi_calc = [
+            FactDistribusiCalc.model_validate(d)
+            for d in self.__ops.get_data(self.__etl_query_dir, "transform_fact_distribusi")
+        ]
+
         return fact_distribusi_calc

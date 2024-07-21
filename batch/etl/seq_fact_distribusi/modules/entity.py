@@ -1,20 +1,5 @@
-from typing import Optional
 from pydantic import BaseModel
 from datetime import date
-
-
-# DWH
-class FactDistribusi(BaseModel):
-    id_waktu: int
-    id_lokasi: int
-    id_unit_peternakan: int
-    id_mitra_bisnis: int
-    id_jenis_produk: int
-    jumlah_distribusi: float
-    harga_minimum: int
-    harga_maximum: int
-    harga_rata_rata: float
-    jumlah_penjualan: float
 
 
 # OPS
@@ -30,7 +15,26 @@ class FactDistribusiCalc(BaseModel):
     jumlah_penjualan: float = 0.0
 
 
-# Params
-class ParamsFactDistribusi(BaseModel):
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+# DWH
+class FactDistribusi(BaseModel):
+    id_waktu: int
+    id_lokasi: int
+    id_unit_peternakan: int
+    id_mitra_bisnis: int
+    id_jenis_produk: int
+    jumlah_distribusi: float
+    harga_minimum: int
+    harga_maximum: int
+    harga_rata_rata: float
+    jumlah_penjualan: float
+
+    @classmethod
+    def from_calc(cls, c: FactDistribusiCalc, id_waktu: int, id_lokasi: int):
+        c_data = c.model_dump()
+        c_data.pop("tgl_distribusi")
+        
+        return cls(
+            **c_data,
+            id_waktu = id_waktu,
+            id_lokasi = id_lokasi,
+        )
