@@ -33,17 +33,22 @@ def main(ev_data: KafkaDistribusi, distribusi_usecase: FactDistribusiUsecase, st
     }
     """
     # Start Logger
-    stream_logger.start_log("fact_distribusi", ev_data.source_table, ev_data.action, ev_data.data)
+    stream_logger.start_log("fact_distribusi", ev_data.source_table, ev_data.action, ev_data.old_data, ev_data.new_data)
 
     try:
         # Create/Update DWH
         fact_distribusi = distribusi_usecase.get_or_create(
-            tgl_distribusi = ev_data.data.tgl_distribusi,
-            id_unit_ternak = ev_data.data.id_unit_ternak,
-            id_jenis_produk = ev_data.data.id_jenis_produk,
-            id_mitra_bisnis = ev_data.data.id_mitra_bisnis,
+            tgl_distribusi = ev_data.new_data.tgl_distribusi if (ev_data.new_data) else ev_data.old_data.tgl_distribusi,
+            id_unit_ternak = ev_data.new_data.id_unit_ternak if (ev_data.new_data) else ev_data.old_data.id_unit_ternak,
+            id_jenis_produk = ev_data.new_data.id_jenis_produk if (ev_data.new_data) else ev_data.old_data.id_jenis_produk,
+            id_mitra_bisnis = ev_data.new_data.id_mitra_bisnis if (ev_data.new_data) else ev_data.old_data.id_mitra_bisnis,
         )
-        fact_distribusi = distribusi_usecase.transform(ev_data.data, fact_distribusi)
+
+        if ev_data.source_table == "distribusi_susu":
+            fact_distribusi = distribusi_usecase.transform_susu(ev_data.action, ev_data.old_data, ev_data.new_data, fact_distribusi)
+        elif ev_data.source_table == "distribusi_ternak":
+            fact_distribusi = distribusi_usecase.transform_ternak(ev_data.action, ev_data.old_data, ev_data.new_data, fact_distribusi)
+
         distribusi_usecase.load(fact_distribusi)
 
         # Push WebSocket

@@ -53,6 +53,7 @@ class FactDistribusiDWHRepository:
         )
         return fact_distribusi_id
 
+
     def get_or_create(self, fact_distribusi_id: FactDistribusiID) -> Optional[FactDistribusi]:
         self.__logger.debug("Get data from 'Fact Distribusi'")
         results = self.__dwh.run(self.__query_dir, "get_fact_distribusi.sql", fact_distribusi_id.model_dump())
@@ -65,7 +66,7 @@ class FactDistribusiDWHRepository:
                 jumlah_distribusi = 0,
                 harga_minimum = -1,
                 harga_maximum = -1,
-                harga_rata_rata = -1,
+                harga_rata_rata = 0,
                 jumlah_penjualan = 0,
             )
         return fact_distribusi

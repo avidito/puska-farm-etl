@@ -1,2 +1,0 @@
-{"source_table": "distribusi_ternak", "action": "CREATE", "data": {"tgl_distribusi": "2024-05-10", "id_unit_ternak": 2, "id_jenis_produk": 1, "id_mitra_bisnis": 1, "jumlah": 2, "harga_berlaku": 10000}}
-{"source_table": "distribusi_susu", "action": "CREATE", "data": {"tgl_distribusi": "2024-05-10", "id_unit_ternak": 2, "id_jenis_produk": 1, "id_mitra_bisnis": 1, "jumlah": 2, "harga_berlaku": 10000}}

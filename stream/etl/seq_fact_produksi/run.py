@@ -34,25 +34,31 @@ def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase, stream_l
     }
     """
     # Start Logger
-    stream_logger.start_log("fact_produksi", ev_data.source_table, ev_data.action, ev_data.data)
+    stream_logger.start_log("fact_produksi", ev_data.source_table, ev_data.action, ev_data.old_data, ev_data.new_data)
     
     try:
         # Create/Update DWH
         fact_produksi = produksi_usecase.get_or_create(
-            tgl_produksi = ev_data.data.tgl_produksi,
-            id_unit_ternak = ev_data.data.id_unit_ternak,
-            id_jenis_produk = ev_data.data.id_jenis_produk,
-            sumber_pasokan = ev_data.data.sumber_pasokan,
+            tgl_produksi = ev_data.new_data.tgl_produksi if (ev_data.new_data) else ev_data.old_data.tgl_produksi,
+            id_unit_ternak = ev_data.new_data.id_unit_ternak if (ev_data.new_data) else ev_data.old_data.id_unit_ternak,
+            id_jenis_produk = ev_data.new_data.id_jenis_produk if (ev_data.new_data) else ev_data.old_data.id_jenis_produk,
+            sumber_pasokan = ev_data.new_data.sumber_pasokan if (ev_data.new_data) else ev_data.old_data.sumber_pasokan,
         )
-        fact_produksi = produksi_usecase.transform(ev_data.data, fact_produksi)
+
+        if ev_data.source_table == "produksi_susu":
+            fact_produksi = produksi_usecase.transform_susu(ev_data.action, ev_data.old_data, ev_data.new_data, fact_produksi)
+        elif ev_data.source_table == "produksi_ternak":
+            fact_produksi = produksi_usecase.transform_ternak(ev_data.action, ev_data.old_data, ev_data.new_data, fact_produksi)
+        
         produksi_usecase.load(fact_produksi)
 
         # Trigger ML API
-        produksi_usecase.predict_susu(
-            id_waktu = fact_produksi.id_waktu,
-            id_lokasi = fact_produksi.id_lokasi,
-            id_unit_peternakan = fact_produksi.id_unit_peternakan,
-        )
+        if (ev_data.source_table == "produksi_susu") and (fact_produksi.id_jenis_produk == 3):
+            produksi_usecase.predict_susu(
+                id_waktu = fact_produksi.id_waktu,
+                id_lokasi = fact_produksi.id_lokasi,
+                id_unit_peternakan = fact_produksi.id_unit_peternakan,
+            )
 
         # Push WebSocket
         produksi_usecase.push_websocket()

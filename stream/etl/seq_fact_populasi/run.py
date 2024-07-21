@@ -39,23 +39,23 @@ def main(ev_data: KafkaPopulasi, populasi_usecase: FactPopulasiUsecase, stream_l
     }
     """
     # Start Logger
-    stream_logger.start_log("fact_populasi", ev_data.source_table, ev_data.action, ev_data.data)
+    stream_logger.start_log("fact_populasi", ev_data.source_table, ev_data.action, ev_data.old_data, ev_data.new_data)
     
     try:
         # Create/Update DWH
         fact_populasi_map = populasi_usecase.get_or_create(
-            tgl_pencatatan = ev_data.data.tgl_pencatatan,
-            id_peternak = ev_data.data.id_peternak,
+            tgl_pencatatan = ev_data.new_data.tgl_pencatatan if (ev_data.new_data) else ev_data.old_data.tgl_pencatatan,
+            id_peternak = ev_data.new_data.id_peternak if (ev_data.new_data) else ev_data.old_data.id_peternak,
         )
         for fact_populasi in fact_populasi_map.values():
             if ev_data.source_table == "history_populasi":
-                fact_populasi = populasi_usecase.transform_jumlah(ev_data.data, fact_populasi)
+                fact_populasi = populasi_usecase.transform_jumlah(ev_data.action, ev_data.old_data, ev_data.new_data, fact_populasi)
             elif ev_data.source_table == "history_kelahiran_kematian":
-                fact_populasi = populasi_usecase.transform_kelahiran_kematian(ev_data.data, fact_populasi)
+                fact_populasi = populasi_usecase.transform_kelahiran_kematian(ev_data.action, ev_data.old_data, ev_data.new_data, fact_populasi)
             elif ev_data.source_table == "pencatatan_ternak_masuk":
-                fact_populasi = populasi_usecase.transform_masuk(ev_data.data, fact_populasi)
+                fact_populasi = populasi_usecase.transform_masuk(ev_data.action, ev_data.old_data, ev_data.new_data, fact_populasi)
             elif ev_data.source_table == "pencatatan_ternak_keluar":
-                fact_populasi = populasi_usecase.transform_keluar(ev_data.data, fact_populasi)
+                fact_populasi = populasi_usecase.transform_keluar(ev_data.action, ev_data.old_data, ev_data.new_data, fact_populasi)
 
             populasi_usecase.load(fact_populasi)
         

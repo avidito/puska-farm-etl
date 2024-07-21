@@ -84,9 +84,15 @@ class PencatatanTernakMasuk(BaseModel):
 class KafkaPopulasi(BaseModel):
     source_table: str
     action: str
-    data: Union[
+    old_data: Optional[Union[
         HistoryPopulasi,
         HistoryKelahiranKematian,
         PencatatanTernakKeluar,
         PencatatanTernakMasuk
-    ]
+    ]]
+    new_data: Optional[Union[
+        HistoryPopulasi,
+        HistoryKelahiranKematian,
+        PencatatanTernakKeluar,
+        PencatatanTernakMasuk
+    ]]

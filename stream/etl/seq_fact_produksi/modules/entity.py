@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional, Union
 from datetime import date
 
 
@@ -17,7 +18,15 @@ class FactProduksi(FactProduksiID):
 
 
 # OPS
-class Produksi(BaseModel):
+class ProduksiSusu(BaseModel):
+    tgl_produksi: date
+    id_unit_ternak: int
+    id_jenis_produk: int
+    sumber_pasokan: str
+    jumlah: float
+
+
+class ProduksiTernak(BaseModel):
     tgl_produksi: date
     id_unit_ternak: int
     id_jenis_produk: int
@@ -29,4 +38,11 @@ class Produksi(BaseModel):
 class KafkaProduksi(BaseModel):
     source_table: str
     action: str
-    data: Produksi
+    old_data: Optional[Union[
+        ProduksiSusu,
+        ProduksiTernak
+    ]]
+    new_data: Optional[Union[
+        ProduksiSusu,
+        ProduksiTernak
+    ]]
