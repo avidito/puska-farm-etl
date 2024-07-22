@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List
 
 from etl.helper.log import LogBatch
+
 from etl.seq_fact_distribusi.modules.repository import (
     FactDistribusiDWHRepository,
     FactDistribusiOpsRepository,
@@ -24,7 +25,7 @@ class FactDistribusiUsecase:
         self.__log = LogBatch(table_name = "fact_distribusi")
     
 
-    # Methods
+    # Public
     def copy_source_cdc(self):
         for source in FactDistribusiUsecase.SOURCES:
             self.__ops_repo.copy_cdc(source)

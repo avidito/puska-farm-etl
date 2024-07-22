@@ -3,6 +3,7 @@ from logging import Logger
 
 from etl.helper.db import PostgreSQLHelper
 from etl.helper.log import create_logger
+
 from etl.seq_fact_distribusi.modules.repository import (
     FactDistribusiDWHRepository,
     FactDistribusiOpsRepository,
@@ -23,7 +24,7 @@ def main(usecase: FactDistribusiUsecase, logger: Logger):
     usecase.flag_cdc()
 
     duration = usecase.log_end(processed_rows)
-    logger.info(f"Finish ETL: 'seq_fact_distribusi'. Time: {duration:.4f}s")
+    logger.info(f"Finish ETL: 'seq_fact_distribusi'. Duration: {duration:.4f}s")
 
 
 # Runtime
@@ -32,14 +33,15 @@ if __name__ == "__main__":
     _, *sys_params = sys.argv
     log_levelname = sys_params[0] if (sys_params) else "info"
 
+    # Init Helper
     logger = create_logger(log_levelname)
     dwh = PostgreSQLHelper(mode = "DWH")
     ops = PostgreSQLHelper(mode = "OPS")
 
-    # log_batch_h = log.LogBatchHelper(dwh)
-    
+    # Init Usecase
     dwh_repo = FactDistribusiDWHRepository(dwh)
     ops_repo = FactDistribusiOpsRepository(ops)
     usecase = FactDistribusiUsecase(ops_repo, dwh_repo)
 
+    # Main
     main(usecase, logger)

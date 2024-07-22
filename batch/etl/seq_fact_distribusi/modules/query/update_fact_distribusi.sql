@@ -13,7 +13,7 @@ INSERT INTO fact_distribusi (
   modified_dt
 )
 SELECT
-  d.id AS id_waktu,
+  w.id AS id_waktu,
   l.id AS id_lokasi,
   t.id_unit_peternakan,
   t.id_mitra_bisnis,
@@ -26,8 +26,8 @@ SELECT
   TIMEZONE('Asia/Jakarta', NOW()) AS created_dt,
   TIMEZONE('Asia/Jakarta', NOW()) AS modified_dt
 FROM tmp_fact_distribusi AS t
-LEFT JOIN dim_waktu AS d
-  ON t.tgl_distribusi = d.tanggal
+LEFT JOIN dim_waktu AS w
+  ON t.tgl_distribusi = w.tanggal
 LEFT JOIN dim_unit_peternakan AS up
   ON t.id_unit_peternakan = up.id
 LEFT JOIN dim_lokasi AS l
