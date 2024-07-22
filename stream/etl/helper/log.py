@@ -31,7 +31,8 @@ class LogStream(BaseModel):
     table_name: str
     source_table: str
     action: str
-    payload: str
+    old_data: Optional[dict]
+    new_data: Optional[dict]
     start_tm: datetime
     end_tm: Optional[datetime] = None
     duration: Optional[float] = None
@@ -55,14 +56,15 @@ class LogStreamHelper:
         table_name: str,
         source_table: str,
         action: str,
-        data: BaseModel,
+        old_data: Optional[BaseModel],
+        new_data: Optional[BaseModel],
     ):
-        payload = data.model_dump_json()
         log_stream_en = LogStream(
             table_name = table_name,
             source_table = source_table,
             action = action,
-            payload = payload,
+            old_data = old_data.model_dump() if (old_data) else None,
+            new_data = new_data.model_dump() if (new_data) else None,
             start_tm = datetime.now(tz=pytz.timezone("Asia/Jakarta")),
         )
 

@@ -1,9 +1,11 @@
 from datetime import date
+from typing import Optional
 
 from etl.helper.api.schemas import MLTriggerProduksi
 
 from etl.seq_fact_produksi.modules.entity import (
-    Produksi,
+    ProduksiSusu,
+    ProduksiTernak,
     FactProduksi,
 )
 from etl.seq_fact_produksi.modules.repository import (
@@ -42,8 +44,41 @@ class FactProduksiUsecase:
         return fact_produksi
 
 
-    def transform(self, new_produksi: Produksi, fact_produksi: FactProduksi) -> FactProduksi:
-        fact_produksi.jumlah_produksi = fact_produksi.jumlah_produksi + new_produksi.jumlah
+    def transform_susu(
+        self,
+        action: str,
+        old_produksi: Optional[ProduksiSusu],
+        new_produksi: Optional[ProduksiSusu],
+        fact_produksi: FactProduksi
+    ) -> FactProduksi:
+        if action == "INSERT":
+            _jumlah_produksi = fact_produksi.jumlah_produksi + new_produksi.jumlah
+        elif action == "UPDATE":
+            _jumlah_produksi = fact_produksi.jumlah_produksi - old_produksi.jumlah + new_produksi.jumlah
+        elif action == "DELETE":
+            _jumlah_produksi = fact_produksi.jumlah_produksi - old_produksi.jumlah
+        
+        fact_produksi.jumlah_produksi = _jumlah_produksi
+
+        return fact_produksi
+
+
+    def transform_ternak(
+        self,
+        action: str,
+        old_produksi: Optional[ProduksiTernak],
+        new_produksi: Optional[ProduksiTernak],
+        fact_produksi: FactProduksi
+    ) -> FactProduksi:
+        if action == "INSERT":
+            _jumlah_produksi = fact_produksi.jumlah_produksi + new_produksi.jumlah
+        elif action == "UPDATE":
+            _jumlah_produksi = fact_produksi.jumlah_produksi - old_produksi.jumlah + new_produksi.jumlah
+        elif action == "DELETE":
+            _jumlah_produksi = fact_produksi.jumlah_produksi - old_produksi.jumlah
+
+        fact_produksi.jumlah_produksi = _jumlah_produksi
+        
         return fact_produksi
 
 
@@ -58,7 +93,8 @@ class FactProduksiUsecase:
             id_unit_peternakan = id_unit_peternakan,
         )
         self.__ml_repo.predict_susu(trigger)
-    
+
+
     def push_websocket(self):
         self.__ws_repo.push_susu()
         self.__ws_repo.push_ternak()

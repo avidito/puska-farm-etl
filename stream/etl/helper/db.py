@@ -1,8 +1,7 @@
 import os
 import json
-import logging
-from typing import List, Optional
-from datetime import date
+from typing import Any, List, Optional
+from datetime import date, datetime
 from pydantic import BaseModel
 
 from sqlalchemy import Engine, create_engine, text
@@ -67,6 +66,19 @@ class DWHHelper:
     
 
     # Private
+    def __json_default_serial(self, obj: Any):
+
+        # Date
+        if isinstance(obj, date):
+            return obj.strftime("%Y-%m-%d")
+        
+        # Datetime
+        if isinstance(obj, datetime):
+            return obj.strftime("%Y-%m-%d %T")
+
+        raise TypeError(f"Type {type(obj)} not serializable")
+
+
     def __generate_load_query(
         self,
         table: str,
@@ -112,7 +124,7 @@ class DWHHelper:
                 elif (
                     isinstance(row[col], dict)
                 ):
-                    insert_value.append(f"'{json.dumps(row[col])}'".replace(":", r"\:"))
+                    insert_value.append(f"'{json.dumps(row[col], default=self.__json_default_serial)}'".replace(":", r"\:"))
             
             insert_value += [
                 "TIMEZONE('Asia/Jakarta', NOW())",

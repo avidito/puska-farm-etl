@@ -1,10 +1,10 @@
 import os
 import json
-from typing import List, Optional
+from typing import Callable, Dict, List, Optional
 from datetime import date
 from pydantic import BaseModel
 
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, Connection, TextClause, create_engine, text
 from urllib.parse import quote_plus
 
 from etl.helper.config import CONFIG
@@ -37,53 +37,95 @@ def get_ops() -> Engine:
     )
     return engine
 
+DB_GENERATOR: Dict[str, Callable] = {
+    "DWH": get_dwh,
+    "OPS": get_ops,
+}
+
 
 # Helper
-class DWHHelper:
+class PostgreSQLHelper:
     __db: Engine
+    __helper_query_dir: str
 
-    def __init__(self):
-        self.__db = get_dwh()
-    
+    def __init__(self, mode: str):
+        try:
+            self.__db = DB_GENERATOR[mode]()
+        except KeyError:
+            raise KeyError(f"No DB_GENERATOR for mode: '{mode}'")
+        
+        self.__helper_query_dir = os.path.join(os.path.dirname(__file__), "query")
 
-    # Methods
-    def exec(self, query_str: str, params: dict) -> List[dict]:
-        query_clause = text(query_str)
+
+    # Public - CDC
+    def copy_cdc(self, table_name: str):
+        self.__run_query(self.__helper_query_dir, "copy_cdc", {"table_name": table_name}, with_result = False)
+
+
+    def remove_cdc(self, table_name: str):
+        self.__run_query(self.__helper_query_dir, "remove_cdc", {"table_name": table_name}, with_result = False)
+
+
+    def flag_cdc(self, table_name: str):
+        self.__run_query(self.__helper_query_dir, "flag_cdc", {"table_name": table_name}, with_result = False)
+
+
+    # Public - SQL Getter
+    def load(self, table_name: str, data: List[BaseModel]) -> int:
         with self.__db.connect() as conn:
-            results_it = conn.execute(query_clause, params)
-            results = [dict(row) for row in results_it.mappings().all()]
+            if data:
+                    data_dict = [row.model_dump() for row in data]
+                    columns = data_dict[0].keys()
+
+                    load_query = self.__generate_load_query(table_name, columns, data_dict)
+                    result_it = conn.execute(load_query, {})
+                    result = [dict(row) for row in result_it.mappings().all()]
+                    processed_rows = result[0]
+            else:
+                processed_rows = 0
+            
             conn.commit()
-        return results
+        return processed_rows
 
 
-    def run(self, query_dir: str, query_file: str, params: dict) -> Optional[List[dict]]:
-        with open(os.path.join(query_dir, query_file), mode="r") as file:
-            query = file.read()
-        results = self.exec(query, params)
-        return results
-
-
-    def load(self, table: str, data: List[BaseModel], pk: List[str], update_insert: bool = False) -> int:
-        if (len(data) > 0):
+    def load_session(self, conn: Connection, table_name: str, data: List[BaseModel]) -> int:
+        if data:
             data_dict = [row.model_dump() for row in data]
             columns = data_dict[0].keys()
 
-            load_query = self.__generate_load_query(table, columns, pk, data_dict, update_insert)
-            processed_rows = self.exec(load_query, {})[0]["processed_rows"]
+            load_query = self.__generate_load_query(table_name, columns, data_dict)
+            result_it = conn.execute(load_query, {})
+            result = [dict(row) for row in result_it.mappings().all()]
+            processed_rows = result[0]["processed_rows"]
             return processed_rows
         else:
             return 0
-    
+
+
+    def get_data(self, query_dir: str, query_name: str, params: Optional[dict] = None) -> List[dict]:
+        result = self.__run_query(query_dir, query_name, params)
+        return result
+
+
+    def get_db(self) -> Engine:
+        return self.__db
+
+
+    def run_query_session(self, conn: Connection, query_dir: str, query_name: str, params: Optional[None] = {}):
+        query_file = os.path.join(query_dir, f"{query_name}.sql")
+        with open(query_file, "r") as file:
+            query = text(file.read())
+
+        conn.execute(query, params)
+
 
     # Private
     def __generate_load_query(
         self,
         table: str,
         columns: List[str],
-        pk: List[str],
         data: List[dict],
-        update_insert: bool
-    ) -> str:
+    ) -> TextClause:
         # Define Insert Statement
         insert_statement = "\n".join([
             f"  INSERT INTO {table} (",
@@ -132,22 +174,7 @@ class DWHHelper:
         
         insert_value_statement = ", ".join(insert_value_rows)
 
-        # Define Update/Insert Statement
-        upsert_statement = "\n".join([
-            f"  ON CONFLICT ON CONSTRAINT {table}_pkey DO UPDATE SET",
-            *[
-                f"    {col} = EXCLUDED.{col},"
-                for col in filter(lambda c: c not in pk, columns)
-            ],
-            "    modified_dt = TIMEZONE('Asia/Jakarta', NOW())",
-        ])
-
         query = insert_statement + insert_value_statement
-        if (update_insert):
-            query = "\n".join([
-                query,
-                upsert_statement,
-            ])
         
         # Get Row Count
         query = "\n".join([
@@ -157,27 +184,21 @@ class DWHHelper:
             ")",
             "SELECT COUNT(0) AS processed_rows FROM data_load;",
         ])
+        return text(query)
+
+    def __get_query(self, query_dir: str, query_name: str) -> TextClause:
+        query_path = os.path.join(query_dir, f"{query_name}.sql")
+        with open(query_path, "r") as file:
+            query = text(file.read())
         return query
 
 
-class OpsHelper:
-    __db: Engine
-
-    def __init__(self):
-        self.__db = get_ops()
-    
-
-    # Methods
-    def exec(self, query_str: str, params: dict) -> List[dict]:
-        query_clause = text(query_str)
+    def __run_query(self, query_dir: str, query_name: str, params: Optional[dict] = None, with_result: bool = True) -> List[dict]:
+        query = self.__get_query(query_dir, query_name)
         with self.__db.connect() as conn:
-            results_it = conn.execute(query_clause, params)
-            results = [dict(row) for row in results_it.mappings().all()]
-        return results
+            result_it = conn.execute(query, parameters = params if (params) else {})
+            result = [dict(row) for row in result_it.mappings().all()] if (with_result) else []
+            
+            conn.commit()
 
-
-    def run(self, query_dir: str, query_file: str, params: dict) -> Optional[List[dict]]:
-        with open(os.path.join(query_dir, query_file), mode="r") as file:
-            query = file.read()
-        results = self.exec(query, params)
-        return results
+        return result
