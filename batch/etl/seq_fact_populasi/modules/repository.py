@@ -26,7 +26,7 @@ class FactPopulasiDWHRepository:
             data = [log],
         )
 
-    def update_dwh(self, calc: List[FactPopulasiCalc]) -> float:
+    def update_dwh(self, calc: List[FactPopulasiCalc]) -> int:
         db = self.__dwh.get_db()
         with db.connect() as conn:
             processed_rows = self.__create_tmp_table(conn, calc)
@@ -74,10 +74,10 @@ class FactPopulasiOpsRepository:
 
 
     # Public
-    def transform(self) -> FactPopulasiCalc:
-        fact_distribusi_calc = [
+    def transform(self) -> List[FactPopulasiCalc]:
+        fact_populasi_calc = [
             FactPopulasiCalc.model_validate(d)
             for d in self.__ops.get_data(self.__etl_query_dir, "transform_fact_populasi")
         ]
 
-        return fact_distribusi_calc
+        return fact_populasi_calc

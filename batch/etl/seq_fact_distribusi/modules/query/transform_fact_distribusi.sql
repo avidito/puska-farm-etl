@@ -27,9 +27,21 @@ cte_distribusi_ternak AS (
   GROUP BY 1, 2, 3, 4
 ),
 cte_summary AS (
-  SELECT * FROM cte_distribusi_susu
-  UNION ALL
-  SELECT * FROM cte_distribusi_ternak
+  SELECT
+    tgl_distribusi,
+    id_unit_peternakan,
+    id_mitra_bisnis,
+    id_jenis_produk,
+    jumlah_distribusi,
+    harga_minimum,
+    harga_maximum,
+    harga_rata_rata,
+    jumlah_penjualan
+  FROM (
+    SELECT * FROM cte_distribusi_susu
+    UNION ALL
+    SELECT * FROM cte_distribusi_ternak
+  ) AS ud
 )
 SELECT * FROM cte_summary
 ORDER BY 1, 2, 3, 4;

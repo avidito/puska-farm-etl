@@ -28,7 +28,7 @@ SELECT
   TIMEZONE('Asia/Jakarta', NOW()) AS created_dt,
   TIMEZONE('Asia/Jakarta', NOW()) AS modified_dt
 FROM tmp_fact_populasi AS t
-LEFT JOIN dim_waktu as w
+LEFT JOIN dim_waktu AS w
   ON t.tgl_pencatatan = w.tanggal
 LEFT JOIN (
   SELECT

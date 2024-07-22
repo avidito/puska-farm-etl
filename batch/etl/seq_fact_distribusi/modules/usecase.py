@@ -13,6 +13,7 @@ from etl.seq_fact_distribusi.modules.repository import (
 class FactDistribusiUsecase:
     __ops_repo: FactDistribusiOpsRepository
     __dwh_repo: FactDistribusiDWHRepository
+    __log: LogBatch
 
     SOURCES: List[str] = [
         "distribusi_susu",

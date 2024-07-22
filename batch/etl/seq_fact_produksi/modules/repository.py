@@ -1,68 +1,86 @@
 import os
-from logging import Logger
 from typing import List
+from sqlalchemy import Connection
 
-from etl.helper.db import OpsHelper, DWHHelper
+from etl.helper.db import PostgreSQLHelper
+from etl.helper.log import LogBatch
+
 from etl.seq_fact_produksi.modules.entity import (
-    FactProduksi,
     FactProduksiCalc,
-    ParamsFactProduksi,
 )
 
 
 class FactProduksiDWHRepository:
-    __dwh: DWHHelper
-    __logger: Logger
+    __dwh: PostgreSQLHelper
+    __etl_query_dir: str
 
-    PK: List[str] = [
-        "id_waktu",
-        "id_lokasi",
-        "id_unit_peternakan",
-        "id_jenis_produk",
-        "id_sumber_pasokan",
-    ]
 
-    def __init__(self, dwh: DWHHelper, logger: Logger):
+    def __init__(self, dwh: PostgreSQLHelper):
         self.__dwh = dwh
-        self.__logger = logger
+        self.__etl_query_dir = os.path.join(os.path.dirname(__file__), "query")
 
 
-    # Methods
-    def load(self, produksi: List[FactProduksi]) -> int:
-        self.__logger.debug("Load data to 'Fact Produksi'")
-        processed_row = self.__dwh.load(
-            "fact_produksi",
-            data = produksi,
-            pk = self.PK,
-            update_insert = True
+    # Public
+    def load_log(self, log: LogBatch):
+        self.__dwh.load(
+            table_name = "log_batch",
+            data = [log],
         )
-        return processed_row
-    
-
-class FactProduksiOpsRepository:
-    __ops: OpsHelper
-    __logger: Logger
-
-    def __init__(self, ops: OpsHelper, logger: Logger):
-        self.__ops = ops
-        self.__logger = logger
-
-        self.__query_dir = os.path.join(os.path.dirname(__file__), "query")
 
 
-    # Methods
-    def get(self, params: ParamsFactProduksi) -> List[FactProduksi]:
-        prc_params = {
-            "start_date": params.start_date,
-            "end_date": params.end_date,
-        }
-        fact_produksi_calc = self.__calc_produksi(prc_params)
-        return fact_produksi_calc
+    def update_dwh(self, calc: List[FactProduksiCalc]) -> float:
+        db = self.__dwh.get_db()
+        with db.connect() as conn:
+            processed_rows = self.__create_tmp_table(conn, calc)
+            self.__update_dwh(conn)
+
+            conn.commit()
+        return processed_rows
 
 
     # Private
-    def __calc_produksi(self, prc_params: dict, query: str = "calculate_produksi.sql") -> List[FactProduksi]:
-        self.__logger.debug(f"Run query '{query}'")
-        results = self.__ops.run(self.__query_dir, query, prc_params)
-        fact_produksi_calc = [FactProduksiCalc(**row) for row in results]
+    def __create_tmp_table(self, conn: Connection, calc: List[FactProduksiCalc]) -> int:
+        self.__dwh.run_query_session(conn, self.__etl_query_dir, "create_tmp_fact_produksi")
+        processed_rows = self.__dwh.load_session(
+            conn,
+            table_name = "tmp_fact_produksi",
+            data = calc,
+        )
+        return processed_rows
+
+
+    def __update_dwh(self, conn: Connection):
+        self.__dwh.run_query_session(conn, self.__etl_query_dir, "update_fact_produksi")
+
+    
+
+class FactProduksiOpsRepository:
+    __ops: PostgreSQLHelper
+    __etl_query_dir: str
+
+    def __init__(self, ops: PostgreSQLHelper):
+        self.__ops = ops
+        self.__etl_query_dir = os.path.join(os.path.dirname(__file__), "query")
+
+
+    # Public - CDC
+    def copy_cdc(self, table: str):
+        self.__ops.copy_cdc(table)
+
+
+    def remove_cdc(self, table: str):
+        self.__ops.remove_cdc(table)
+
+
+    def flag_cdc(self, table: str):
+        self.__ops.flag_cdc(table)
+
+
+    # Public
+    def transform(self) -> List[FactProduksiCalc]:
+        fact_produksi_calc = [
+            FactProduksiCalc.model_validate(d)
+            for d in self.__ops.get_data(self.__etl_query_dir, "transform_fact_produksi")
+        ]
+
         return fact_produksi_calc

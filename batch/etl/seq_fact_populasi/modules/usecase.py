@@ -13,6 +13,7 @@ from etl.seq_fact_populasi.modules.repository import (
 class FactPopulasiUsecase:
     __dwh_repo: FactPopulasiDWHRepository
     __ops_repo: FactPopulasiOpsRepository
+    __log: LogBatch
 
     SOURCES: List[str] = [
         "history_populasi",
@@ -57,7 +58,7 @@ class FactPopulasiUsecase:
         self.__log.start_tm = start_tm
 
 
-    def transform(self) -> float:
-        fact_distribusi_calc = self.__ops_repo.transform()
-        processed_rows = self.__dwh_repo.update_dwh(fact_distribusi_calc)
+    def transform(self) -> int:
+        fact_populasi_calc = self.__ops_repo.transform()
+        processed_rows = self.__dwh_repo.update_dwh(fact_populasi_calc)
         return processed_rows
