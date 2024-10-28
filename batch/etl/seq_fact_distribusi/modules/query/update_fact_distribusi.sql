@@ -35,8 +35,8 @@ LEFT JOIN dim_lokasi AS l
 ON CONFLICT (id_waktu, id_lokasi, id_unit_peternakan, id_mitra_bisnis, id_jenis_produk)
 DO UPDATE SET
   jumlah_distribusi = fact_distribusi.jumlah_distribusi + EXCLUDED.jumlah_distribusi,
-  harga_minimum = LEAST(fact_distribusi.jumlah_distribusi, EXCLUDED.jumlah_distribusi),
-  harga_maximum = GREATEST(fact_distribusi.jumlah_distribusi, EXCLUDED.jumlah_distribusi),
-  harga_rata_rata = ((fact_distribusi.jumlah_distribusi * fact_distribusi.harga_rata_rata) + (EXCLUDED.jumlah_distribusi * EXCLUDED.harga_rata_rata)) / (fact_distribusi.jumlah_distribusi + EXCLUDED.jumlah_distribusi),
+  harga_minimum = (CASE WHEN EXCLUDED.harga_minimum = 0 THEN 0 ELSE LEAST(fact_distribusi.harga_minimum, EXCLUDED.harga_minimum) END),
+  harga_maximum = (CASE WHEN EXCLUDED.harga_maximum = 0 THEN 0 ELSE GREATEST(fact_distribusi.harga_maximum, EXCLUDED.harga_maximum) END),
+  harga_rata_rata = COALESCE(((fact_distribusi.jumlah_distribusi * fact_distribusi.harga_rata_rata) + (EXCLUDED.jumlah_distribusi * EXCLUDED.harga_rata_rata)) / NULLIF(fact_distribusi.jumlah_distribusi + EXCLUDED.jumlah_distribusi, 0), 0),
   jumlah_penjualan = fact_distribusi.jumlah_penjualan + EXCLUDED.jumlah_penjualan,
   modified_dt = TIMEZONE('Asia/Jakarta', NOW());

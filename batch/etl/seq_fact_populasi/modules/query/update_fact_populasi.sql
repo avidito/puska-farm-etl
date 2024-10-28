@@ -37,7 +37,6 @@ LEFT JOIN (
   FROM dim_peternakan AS p
   LEFT JOIN dim_unit_peternakan AS up
     ON p.id_unit_peternakan = up.id
-  LIMIT 1
 ) AS p_up
   ON t.id_peternakan = p_up.id
 LEFT JOIN dim_lokasi AS l
