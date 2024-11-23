@@ -27,7 +27,7 @@ class MLAPIHelper:
         response = requests.post(
             self.__ml_url.SusuPredict,
             headers = {"Content-Type": "application/json"},
-            data = trigger.model_dump_json()
+            json = trigger.model_dump()
         )
 
         try:

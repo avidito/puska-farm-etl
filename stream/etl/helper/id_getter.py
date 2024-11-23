@@ -87,3 +87,14 @@ class IDGetterHelper:
             return id_waktu
         else:
             self.__logger.error(f"No sumber_pasokan for 'nama_sumber_pasokan' = '{sumber_pasokan}'")
+
+
+    def get_unit_peternakan_lokasi(self, id_unit_peternakan: int) -> Optional[dict]:
+        results = self.__dwh.run(self.__query_dir, "get_unit_peternakan_lokasi.sql", {
+            "id_unit_peternakan": id_unit_peternakan
+        })
+        
+        if (results):
+            return results[0]
+        else:
+            self.__logger.error(f"No lokasi for 'id_unit_peternakan' = '{id_unit_peternakan}'")

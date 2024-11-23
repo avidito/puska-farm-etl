@@ -12,6 +12,13 @@ class FactProduksiID(BaseModel):
     id_sumber_pasokan: int
 
 
+class UnitPeternakanLokasi(BaseModel):
+    id_provinsi: int
+    label_provinsi: str
+    id_kabupaten_kota: int
+    label_kabupaten_kota: str
+
+
 # DWH
 class FactProduksi(FactProduksiID):
     jumlah_produksi: float

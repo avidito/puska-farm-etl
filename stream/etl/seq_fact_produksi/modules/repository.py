@@ -1,5 +1,6 @@
 import os
 import json
+from typing import Optional
 from datetime import date
 from logging import Logger
 from typing import List
@@ -14,6 +15,7 @@ from etl.helper.api.schemas import MLTriggerProduksi
 from etl.seq_fact_produksi.modules.entity import (
     FactProduksi,
     FactProduksiID,
+    UnitPeternakanLokasi,
 )
 
 
@@ -55,6 +57,7 @@ class FactProduksiDWHRepository:
         )
         return fact_produksi_id
 
+
     def get_or_create(self, fact_produksi_id: FactProduksiID) -> FactProduksi:
         self.__logger.debug("Get data from 'Fact Produksi'")
         results = self.__dwh.run(self.__query_dir, "get_fact_produksi.sql", fact_produksi_id.model_dump())
@@ -67,7 +70,21 @@ class FactProduksiDWHRepository:
                 jumlah_produksi = 0,
             )
         return fact_produksi
+
+
+    def get_id_waktu(self, _dt: date) -> Optional[int]:
+        self.__logger.debug(f"Get id_waktu from tanggal: {_dt.strftime('%Y-%m-%d')}")
+        id_waktu = self.__id_getter.get_id_waktu(_dt)
+        return id_waktu
     
+    def get_unit_peternakan_lokasi(self, id_unit_peternakan: int) -> Optional[UnitPeternakanLokasi]:
+        self.__logger.debug(f"Get lokasi from unit_peternakan: {id_unit_peternakan}")
+        result = self.__id_getter.get_unit_peternakan_lokasi(id_unit_peternakan)
+
+        if (result):
+            return UnitPeternakanLokasi.model_validate(result)
+        return result
+
 
     def load(self, produksi: FactProduksi):
         self.__logger.debug("Load data to 'Fact Produksi'")
@@ -89,7 +106,6 @@ class FactProduksiMLRepository:
     
     def predict_susu(self, trigger: MLTriggerProduksi):
         self.__logger.debug("Predict Produksi Susu")
-        
         error = self.__ml_api.predict_susu(trigger)
         if error:
             self.__logger.error(f"Failed to trigger ML: {error}")

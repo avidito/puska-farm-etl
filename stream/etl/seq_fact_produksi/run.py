@@ -1,3 +1,4 @@
+from datetime import timedelta
 from etl.helper import (
     api,
     db,
@@ -34,12 +35,15 @@ def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase, stream_l
     }
     """
     # Start Logger
+    logger.info(f"Start processing new data '{ev_data.action} - {ev_data.source_table}'")
     stream_logger.start_log("fact_produksi", ev_data.source_table, ev_data.action, ev_data.old_data, ev_data.new_data)
     
     try:
         # Create/Update DWH
+        tgl_produksi = ev_data.new_data.tgl_produksi if (ev_data.new_data) else ev_data.old_data.tgl_produksi
+        
         fact_produksi = produksi_usecase.get_or_create(
-            tgl_produksi = ev_data.new_data.tgl_produksi if (ev_data.new_data) else ev_data.old_data.tgl_produksi,
+            tgl_produksi = tgl_produksi,
             id_unit_ternak = ev_data.new_data.id_unit_ternak if (ev_data.new_data) else ev_data.old_data.id_unit_ternak,
             id_jenis_produk = ev_data.new_data.id_jenis_produk if (ev_data.new_data) else ev_data.old_data.id_jenis_produk,
             sumber_pasokan = ev_data.new_data.sumber_pasokan if (ev_data.new_data) else ev_data.old_data.sumber_pasokan,
@@ -55,9 +59,9 @@ def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase, stream_l
         # Trigger ML API
         if (ev_data.source_table == "produksi_susu") and (fact_produksi.id_jenis_produk == 3):
             produksi_usecase.predict_susu(
-                id_waktu = fact_produksi.id_waktu,
-                id_lokasi = fact_produksi.id_lokasi,
+                tgl_prediksi = tgl_produksi + timedelta(days=1),
                 id_unit_peternakan = fact_produksi.id_unit_peternakan,
+                id_lokasi = fact_produksi.id_lokasi,
             )
 
         # Push WebSocket
@@ -68,8 +72,10 @@ def main(ev_data: KafkaProduksi, produksi_usecase: FactProduksiUsecase, stream_l
     except Exception as err:
         logger.error(str(err))
         logger.info("Processed - Status: FAILED")
+        raise err
     
     # End Logger
+    logger.info(f"Finish processing new data '{ev_data.action} - {ev_data.source_table}'")
     stream_logger.end_log()
 
 

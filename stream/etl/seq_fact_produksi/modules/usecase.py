@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 from etl.helper.api.schemas import MLTriggerProduksi
 
@@ -16,6 +16,22 @@ from etl.seq_fact_produksi.modules.repository import (
 
 
 class FactProduksiUsecase:
+    UNIT_PETERNAKAN_MODELS_ID: List[int] = [
+        10, # Zahran Farm
+        11, # Wily Farm
+        18, # NYX Farm
+        23, # PROF Farm
+    ]
+
+    KABUPATEN_KOTA_MODELS_NAME: List[str] = [
+        "PROBOLINGGO",
+        "LUMAJANG"
+    ]
+
+    PROVINSI_MODELS_NAME: List[str] = [
+        "JAWA TIMUR"
+    ]
+    
     __dwh_repo: FactProduksiDWHRepository
     __ml_repo: FactProduksiMLRepository
     __ws_repo: FactProduksiWebSocketRepository
@@ -86,13 +102,31 @@ class FactProduksiUsecase:
         self.__dwh_repo.load(fact_produksi)
 
 
-    def predict_susu(self, id_waktu: int, id_lokasi: int, id_unit_peternakan: int):
-        trigger = MLTriggerProduksi(
-            id_waktu = id_waktu,
-            id_lokasi = id_lokasi,
-            id_unit_peternakan = id_unit_peternakan,
-        )
-        self.__ml_repo.predict_susu(trigger)
+    def predict_susu(self, tgl_prediksi: date, id_unit_peternakan: int, id_lokasi: int):
+        id_waktu = self.__dwh_repo.get_id_waktu(tgl_prediksi)
+        unit_peternakan_lokasi = self.__dwh_repo.get_unit_peternakan_lokasi(id_unit_peternakan)
+        
+        if (id_unit_peternakan in FactProduksiUsecase.UNIT_PETERNAKAN_MODELS_ID):
+            trigger = MLTriggerProduksi(
+                id_waktu = id_waktu,
+                id_lokasi = id_lokasi,
+                id_unit_peternakan = id_unit_peternakan,
+            )
+            self.__ml_repo.predict_susu(trigger)
+        
+        if (unit_peternakan_lokasi.label_provinsi in FactProduksiUsecase.PROVINSI_MODELS_NAME):
+            trigger = MLTriggerProduksi(
+                id_waktu = id_waktu,
+                id_lokasi = unit_peternakan_lokasi.id_provinsi,
+            )
+            self.__ml_repo.predict_susu(trigger)
+        
+        if (unit_peternakan_lokasi.label_kabupaten_kota in FactProduksiUsecase.KABUPATEN_KOTA_MODELS_NAME):
+            trigger = MLTriggerProduksi(
+                id_waktu = id_waktu,
+                id_lokasi = unit_peternakan_lokasi.id_kabupaten_kota,
+            )
+            self.__ml_repo.predict_susu(trigger)
 
 
     def push_websocket(self):
